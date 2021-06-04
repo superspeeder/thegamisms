@@ -1,0 +1,3 @@
+rootProject.name = 'thegame_butjava'
+include 'engine'
+include 'game'
