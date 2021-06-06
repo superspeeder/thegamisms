@@ -1,6 +1,7 @@
 package org.delusion.engine;
 
 import org.delusion.engine.render.texture.Texture2D;
+import org.delusion.engine.sprite.Batch;
 import org.delusion.engine.sprite.QuadSprite;
 import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.Monitor;
@@ -36,6 +37,7 @@ public abstract class App {
 
         Texture2D.initTextures();
         Utils.ignoreErrors(QuadSprite::initMesh);
+        Batch.initStatic();
     }
 
     public void run() {

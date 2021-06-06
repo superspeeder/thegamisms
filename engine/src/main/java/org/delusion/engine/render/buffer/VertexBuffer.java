@@ -12,6 +12,8 @@ public class VertexBuffer {
     private int handle;
     private List<Float> values;
     private BufferMode mode;
+    private boolean dirty = false;
+    private boolean sizeDirty = false;
 
     public VertexBuffer(List<Float> values, BufferMode mode) {
         this.values = values;
@@ -43,6 +45,18 @@ public class VertexBuffer {
         glNamedBufferData(handle, size * Float.BYTES, mode.getValue());
     }
 
+    public void update() {
+        if (dirty) {
+            if (sizeDirty) {
+                glNamedBufferData(handle, Utils.listToArrayf(values), mode.getValue());
+                sizeDirty = false;
+            } else {
+                glNamedBufferSubData(handle, 0, Utils.listToArrayf(values));
+            }
+            dirty = false;
+        }
+    }
+
     public void bind() {
         glBindBuffer(GL_ARRAY_BUFFER,handle);
     }
@@ -57,5 +71,10 @@ public class VertexBuffer {
 
     public int getHandle() {
         return handle;
+    }
+
+    public void set(int i, float v) {
+        values.set(i, v);
+        dirty = true;
     }
 }

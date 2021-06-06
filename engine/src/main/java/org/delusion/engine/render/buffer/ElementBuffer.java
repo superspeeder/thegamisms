@@ -3,8 +3,10 @@ package org.delusion.engine.render.buffer;
 import org.delusion.engine.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL45.glCreateBuffers;
@@ -50,6 +52,20 @@ public class ElementBuffer {
     public ElementBuffer(int size) {
         this(size, BufferMode.StaticDraw);
     }
+
+    public ElementBuffer(int[] eboD) {
+        this(eboD, BufferMode.StaticDraw);
+    }
+
+    public ElementBuffer(int[] eboD, BufferMode mode) {
+        this.values = Arrays.stream(eboD).boxed().collect(Collectors.toList());
+        this.mode = mode;
+
+        handle = glCreateBuffers();
+        bind(); unbind();
+        glNamedBufferData(handle, eboD, mode.getValue());
+    }
+
 
     public void bind() {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,handle);
