@@ -40,7 +40,7 @@ public class Monitor {
     public static Monitor getMonitorOrPrimary(int index) {
         try {
             return getMonitor(index);
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | IndexOutOfBoundsException e) {
             return getPrimaryMonitor();
         }
     }

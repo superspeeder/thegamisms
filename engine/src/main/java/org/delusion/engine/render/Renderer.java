@@ -39,6 +39,8 @@ public class Renderer {
     public Renderer(App app) {
         this.app = app;
         this.backgroundColor = Color.WHITE;
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     public void setBackgroundColor(Color color) {

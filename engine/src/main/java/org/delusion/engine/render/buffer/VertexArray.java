@@ -1,4 +1,6 @@
 package org.delusion.engine.render.buffer;
+import java.util.List;
+
 import static org.lwjgl.opengl.GL46.*;
 
 public class VertexArray {
@@ -49,5 +51,27 @@ public class VertexArray {
 
     public void bind() {
         glBindVertexArray(handle);
+    }
+
+    public VertexArray bindVertexBuffer(VertexBuffer vbo, List<Integer> attribSizes) {
+        int vsize = 0;
+        int binding = nextBinding++;
+        for (int asize : attribSizes) {
+            vsize += asize;
+        }
+
+        glVertexArrayVertexBuffer(handle, binding, vbo.getHandle(), 0,vsize * Float.BYTES);
+
+
+        int off = 0;
+        for (int asize : attribSizes) {
+            glVertexArrayAttribFormat(handle, nextAttribute, asize, GL_FLOAT, false, off * Float.BYTES);
+            off += asize;
+            glVertexArrayAttribBinding(handle, nextAttribute, binding);
+            glEnableVertexArrayAttrib(handle, nextAttribute++);
+        }
+
+        return this;
+
     }
 }

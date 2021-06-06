@@ -1,9 +1,13 @@
 package org.delusion.engine;
 
+import org.delusion.engine.render.texture.Texture2D;
+import org.delusion.engine.sprite.QuadSprite;
+import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.Monitor;
 import org.delusion.engine.window.Window;
 import org.delusion.engine.window.input.InputHandler;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.vulkan.IMGFilterCubic;
 import org.lwjgl.vulkan.VkApplicationInfo;
 
 public abstract class App {
@@ -29,6 +33,9 @@ public abstract class App {
         window.makeContextCurrent();
 
         window.setVSyncEnabled(settings.enableVSync);
+
+        Texture2D.initTextures();
+        Utils.ignoreErrors(QuadSprite::initMesh);
     }
 
     public void run() {
@@ -55,6 +62,11 @@ public abstract class App {
     public void closeWindow() {
         window.close();
     }
+
+    public Window getWindow() {
+        return window;
+    }
+
 
     public abstract void create();
     public abstract void render(double delta);

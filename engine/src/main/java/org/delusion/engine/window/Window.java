@@ -1,5 +1,6 @@
 package org.delusion.engine.window;
 
+import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.input.InputHandler;
 import org.delusion.engine.window.input.Key;
 import org.joml.Vector2d;
@@ -8,6 +9,8 @@ import org.lwjgl.glfw.GLFWCharCallbackI;
 import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 import org.lwjgl.glfw.GLFWMouseButtonCallbackI;
 import org.lwjgl.opengl.GL;
+
+import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -43,6 +46,7 @@ public class Window {
         public void onMouseMotion(Vector2d pos) {
         }
     };
+    private int width, height;
 
     /**
      * Internal use constructor. used to copy glfw window handles into the window class.
@@ -118,6 +122,8 @@ public class Window {
         glfwDefaultWindowHints();
         applySettings(settings);
         handle = glfwCreateWindow(width, height, title, NULL, NULL);
+        this.width = width;
+        this.height = height;
         makeContextCurrent();
         initInputs();
     }
@@ -127,6 +133,8 @@ public class Window {
         glfwDefaultWindowHints();
         applySettings(settings, monitor);
         handle = glfwCreateWindow(width, height, title, monitor.handle(), NULL);
+        this.width = width;
+        this.height = height;
         makeContextCurrent();
         initInputs();
     }
@@ -135,6 +143,8 @@ public class Window {
         glfwDefaultWindowHints();
         applySettings(settings);
         handle = glfwCreateWindow(width, height, title, NULL, share.handle);
+        this.width = width;
+        this.height = height;
         makeContextCurrent();
         initInputs();
     }
@@ -143,6 +153,8 @@ public class Window {
         glfwDefaultWindowHints();
         applySettings(settings, monitor);
         handle = glfwCreateWindow(width, height, title, monitor.handle(), share.handle);
+        this.width = width;
+        this.height = height;
         makeContextCurrent();
         initInputs();
     }
@@ -152,6 +164,8 @@ public class Window {
         applySettings(settings, monitor);
         VideoMode videoMode = monitor.getVideoMode();
         handle = glfwCreateWindow(videoMode.getWidth(), videoMode.getHeight(), title, monitor.handle(), NULL);
+        this.width = videoMode.getWidth();
+        this.height = videoMode.getHeight();
         makeContextCurrent();
         initInputs();
     }
@@ -161,6 +175,8 @@ public class Window {
         applySettings(settings, monitor);
         VideoMode videoMode = monitor.getVideoMode();
         handle = glfwCreateWindow(videoMode.getWidth(), videoMode.getHeight(), title, monitor.handle(), share.handle);
+        this.width = videoMode.getWidth();
+        this.height = videoMode.getHeight();
         makeContextCurrent();
         initInputs();
     }
@@ -168,6 +184,10 @@ public class Window {
     private void initInputs() {
         Key.init();
         glfwSetKeyCallback(handle, this::kcbk);
+        glfwSetMouseButtonCallback(handle, this::mbcbk);
+        glfwSetCharCallback(handle, this::chartypecbk);
+        glfwSetCharModsCallback(handle, this::charmodstypecbk);
+        glfwSetCursorPosCallback(handle, this::mousemotioncbk);
 
     }
 
@@ -204,7 +224,7 @@ public class Window {
     }
 
     private void mousemotioncbk(long window, double xpos, double ypos) {
-        getInputHandler().onMouseMotion(new Vector2d(xpos, ypos));
+        getInputHandler().onMouseMotion(new Vector2d(xpos, height - ypos));
     }
 
     public InputHandler getInputHandler() {
@@ -255,6 +275,32 @@ public class Window {
         } else {
             glfwSwapInterval(0);
         }
+    }
+
+    public void hideCursor() {
+        glfwSetInputMode(handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    }
+
+    public void showCursor() {
+        glfwSetInputMode(handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    public void disableCursor() {
+        glfwSetInputMode(handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    public Vector2i getSize() {
+        IntBuffer[] buffers = Utils.createIntBuffers(1,2);
+        glfwGetWindowSize(handle, buffers[0], buffers[1]);
+        return new Vector2i(buffers[0].rewind().get(), buffers[1].rewind().get());
+    }
+
+    public float getTime() {
+        return (float) glfwGetTime();
+    }
+
+    public boolean getKey(Key key) {
+        return glfwGetKey(handle, key.getID()) == GLFW_PRESS;
     }
 
 

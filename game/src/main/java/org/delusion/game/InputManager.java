@@ -6,13 +6,14 @@ import org.delusion.engine.render.Renderer;
 import org.delusion.engine.window.input.InputHandler;
 import org.delusion.engine.window.input.Key;
 import org.joml.Vector2d;
+import org.joml.Vector2i;
 
 public class InputManager implements InputHandler {
 
-    private final App app;
+    private final Main app;
     private final Renderer renderer;
 
-    public InputManager(App app, Renderer renderer) {
+    public InputManager(Main app, Renderer renderer) {
         this.app = app;
         this.renderer = renderer;
     }
@@ -60,7 +61,8 @@ public class InputManager implements InputHandler {
 
     @Override
     public void onMouseMotion(Vector2d pos) {
-
+        Vector2i ws = app.getWindow().getSize();
+        app.remakeModel((float) pos.x * (1920.0f / ws.x), (float) pos.y * (1080.0f / ws.y));
     }
 }
 

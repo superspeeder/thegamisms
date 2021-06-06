@@ -2,11 +2,15 @@ package org.delusion.engine.utils;
 
 import org.lwjgl.BufferUtils;
 
-import java.nio.Buffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.*;
 import java.util.List;
+import java.util.Scanner;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Utils {
     public static void requirePositive(int value, String message) {
@@ -60,4 +64,52 @@ public class Utils {
         }
         return arr;
     }
+
+    public static String readResourceToString(String path) {
+        InputStream istream = Utils.class.getResourceAsStream(path);
+        return new BufferedReader(new InputStreamReader(istream))
+                .lines().parallel().collect(Collectors.joining("\n"));
+    }
+
+    public static ByteBuffer loadByteBufferResource(String path) throws IOException {
+        InputStream istream = Utils.class.getResourceAsStream(path);
+        byte[] bytes = istream.readAllBytes();
+        if (bytes.length == 0) {
+            return null;
+        }
+
+        ByteBuffer bb = BufferUtils.createByteBuffer(bytes.length);
+        bb.put(bytes);
+        bb.rewind();
+        return bb;
+    }
+
+
+    @FunctionalInterface
+    public interface ThrowingSupplier<T> {
+        T get() throws Throwable;
+    }
+
+    @FunctionalInterface
+    public interface ThrowingVoid {
+        void run() throws Throwable;
+    }
+
+    public static <T> T ignoreErrors(ThrowingSupplier<T> f) {
+        try {
+            return f.get();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void ignoreErrors(ThrowingVoid f) {
+        try {
+            f.run();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
 }
