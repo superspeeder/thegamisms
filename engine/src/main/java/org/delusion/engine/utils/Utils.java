@@ -1,5 +1,6 @@
 package org.delusion.engine.utils;
 
+import org.joml.Vector2i;
 import org.lwjgl.BufferUtils;
 
 import java.io.BufferedReader;
@@ -8,8 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.*;
 import java.util.List;
-import java.util.Scanner;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Utils {
@@ -82,6 +81,10 @@ public class Utils {
         bb.put(bytes);
         bb.rewind();
         return bb;
+    }
+
+    public static int mrdist(Vector2i v1, Vector2i v2) {
+        return Math.max(Math.abs(v1.x-v2.x), Math.abs(v1.y-v2.y));
     }
 
 

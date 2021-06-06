@@ -3,6 +3,7 @@ package org.delusion.engine.render.texture;
 
 import org.delusion.engine.utils.Utils;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryUtil;
 
@@ -70,6 +71,20 @@ public class Texture2D {
 
     public int getHandle() {
         return handle;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public Vector4f pixelToUVs(float u1, float v1, float u2, float v2) {
+        Vector2f uv1 = pixelToUVs(new Vector2f(u1,v1));
+        Vector2f uv2 = pixelToUVs(new Vector2f(u2,v2));
+        return new Vector4f(uv1.x,uv1.y,uv2.x,uv2.y);
     }
 
     public enum WrapMode {

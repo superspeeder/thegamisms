@@ -61,4 +61,7 @@ public abstract class Camera {
         return this;
     }
 
+    public Vector2f getPosition() {
+        return new Vector2f(position);
+    }
 }
