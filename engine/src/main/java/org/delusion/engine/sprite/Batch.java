@@ -57,11 +57,13 @@ public class Batch {
     }
 
     public void draw(Renderer renderer) {
-        renderer.drawElements(Renderer.PrimitiveType.Triangles, vao, verticesBatched);
+        if (quadsBatched < 0) return;
+        renderer.drawElements(Renderer.PrimitiveType.Triangles, vao, quadsBatched * 6);
     }
 
     public Batch batch(Vector2f position, Vector2f size, Vector4f uvs) {
-        if (quadsBatched >= MAX_QUADS) { return this; }
+        if (quadsBatched >= MAX_QUADS) {
+            System.out.println("Fuck"); return this; }
         addVertices(
                 position.x,position.y,0.0f, uvs.x, uvs.y,
                 position.x + size.x, position.y, 0.0f, uvs.z, uvs.y,

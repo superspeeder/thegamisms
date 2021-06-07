@@ -35,10 +35,12 @@ public class Texture2D {
     }
 
     public Texture2D(String path, TexParams params) throws IOException {
+        System.out.println("Loading texture '" + path + "'");
         IntBuffer[] ibs = Utils.createIntBuffers(1,3);
         ByteBuffer data = STBImage.stbi_load_from_memory(Objects.requireNonNull(Utils.loadByteBufferResource(path), "Texture '" + path + "' is not valid. (no data exists in file)"), ibs[0], ibs[1], ibs[2], 4);
 
         if (data == null) {
+            System.err.println("Fuck!");
             throw new IOException("Failed to load texture '" + path + "'");
         }
 
@@ -46,7 +48,9 @@ public class Texture2D {
         bind();
         applySettings(params);
         width = ibs[0].rewind().get();
-        height = ibs[0].rewind().get();
+        height = ibs[1].rewind().get();
+        System.out.println("width = " + width);
+        System.out.println("height = " + height);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 

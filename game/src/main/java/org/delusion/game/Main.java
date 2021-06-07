@@ -45,17 +45,17 @@ public class Main extends App {
         program = new ShaderProgram(new Shader(Shader.Type.Vertex,"/shaders/testvert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/testfrag.glsl"));
 
         cursorSprite = new QuadSprite(new Vector2f(0, 0), new Vector2f(64, 64), (float) Math.toRadians(-135));
-        camera = new OrthoCamera(0, 1920, 0, 1080);
+        camera = new OrthoCamera(-960, 960, -540, 540);
         batch = new Batch();
 
         Texture2D.TexParams texParams = new Texture2D.TexParams()
-                .setWrap(Texture2D.WrapMode.Repeat, Texture2D.WrapMode.Repeat)
-                .setFilter(Texture2D.Filter.Linear, Texture2D.Filter.Linear);
+                .setWrap(Texture2D.WrapMode.ClampToEdge, Texture2D.WrapMode.ClampToEdge)
+                .setFilter(Texture2D.Filter.Nearest, Texture2D.Filter.Nearest);
 
-        tex = Utils.ignoreErrors(() -> new Texture2D("/textures/francis.jpg", texParams));
+        tex = Utils.ignoreErrors(() -> new Texture2D("/textures/tmap.png", texParams));
         tex2 = Utils.ignoreErrors(() -> new Texture2D("/textures/beaker.png", texParams.setFilter(Texture2D.Filter.Linear, Texture2D.Filter.Nearest)));
 
-        ts = new Tileset(tex, new Vector2f(88.6875f, 118.25f));
+        ts = new Tileset(tex, new Vector2f(16, 16));
 
         getWindow().hideCursor();
         setInputHandler(new InputManager(this, renderer));
@@ -88,17 +88,16 @@ public class Main extends App {
         program.uniformMat4("model", new Matrix4f().identity());
         program.uniformMat4("viewProjection", camera.getCombined());
         chunkManager.update(ChunkManager.chunkPosFromPixel(camera.getPosition()));
-        batch.begin();
+//        batch.begin();
 //                .batch(new Vector2f(0,0), new Vector2f(128,128), ts.tileUVs(150))
 //                .batch(new Vector2f(128,0), new Vector2f(128,128), ts.tileUVs(151))
 //                .batch(new Vector2f(0,128), new Vector2f(128,128), ts.tileUVs(166))
 //                .batch(new Vector2f(128, 128), new Vector2f(128,128), ts.tileUVs(167))
 //                .end();
-        chunkManager.renderToBatch(batch);
+//        batch.end();
+//        batch.draw(renderer);
 
-        batch.end();
-        batch.draw(renderer);
-
+        chunkManager.draw(renderer);
 
         tex2.bind();
         program.uniformMat4("model", cursorSprite.getModel());
@@ -112,7 +111,7 @@ public class Main extends App {
     }
 
     public void remakeModel(float x, float y) {
-        cursorSprite.setPosition(x,y);
+        cursorSprite.setPosition(x - 960,y - 540);
     }
 
     public static void main(String[] args) {
