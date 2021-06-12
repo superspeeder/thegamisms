@@ -97,6 +97,17 @@ public class ChunkManager {
         return new Vector2i(Math.floorMod((int) tile.x,Chunk.SIZE), Math.floorMod((int) tile.y,Chunk.SIZE));
     }
 
+    public int getTile(int x, int y) {
+        ChunkPos chunk = chunkPosFromTile(new Vector2f(x,y));
+        if (!chunks.containsKey(chunk)) return -1;
+        Vector2i rel = relative(new Vector2f(x,y));
+        return getChunk(chunk).get(rel);
+    }
+
+    private Chunk getChunk(ChunkPos chunk) {
+        return chunks.get(chunk);
+    }
+
     public static class ChunkPos {
         public final int x;
         public final int y;

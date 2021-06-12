@@ -32,10 +32,13 @@ public class InputManager implements InputHandler {
         if (key == Key.B) {
             renderer.setBackgroundColor(Color.BLUE);
         }
+
+        app.getPlayer().onKeyPress(key);
     }
 
     @Override
     public void onKeyReleased(Key key, int mods, int scancode) {
+        app.getPlayer().onKeyRelease(key);
 
     }
 
@@ -61,8 +64,8 @@ public class InputManager implements InputHandler {
 
     @Override
     public void onMouseMotion(Vector2d pos) {
-        Vector2i ws = app.getWindow().getSize();
-        app.remakeModel((float) pos.x * (1920.0f / ws.x), (float) pos.y * (1080.0f / ws.y));
+//        Vector2i ws = app.getWindow().getSize();
+//        app.remakeModel((float) pos.x * (1920.0f / ws.x), (float) pos.y * (1080.0f / ws.y));
     }
 }
 

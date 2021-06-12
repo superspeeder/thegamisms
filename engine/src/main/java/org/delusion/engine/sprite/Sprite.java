@@ -95,4 +95,11 @@ public class Sprite {
     public void setPosition(float x, float y) {
         setPosition(new Vector2f(x, y));
     }
+
+    public void move(float x, float y) {
+        position.x += x;
+        position.y += y;
+        dirty = true;
+    }
+
 }

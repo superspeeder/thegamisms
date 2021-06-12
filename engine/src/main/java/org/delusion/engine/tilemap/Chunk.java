@@ -83,4 +83,8 @@ public class Chunk {
 
         batch.draw(renderer);
     }
+
+    public int get(Vector2i rel) {
+        return get(rel.x,rel.y);
+    }
 }
