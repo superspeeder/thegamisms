@@ -1,6 +1,8 @@
 package org.delusion.engine.render.shader;
 
+import org.delusion.engine.render.Color;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
@@ -95,5 +97,14 @@ public class ShaderProgram {
         mat.get(fb);
         glProgramUniformMatrix4fv(handle, getUniformLocation(name), false, fb);
         return this;
+    }
+
+    public void uniform2f(String name, Vector2f vec) {
+        uniform2f(name, vec.x,vec.y);
+    }
+
+    public void uniformColor(String name, Color col) {
+        if (col != null)
+            uniform4f(name, col.r(), col.g(), col.b(), col.a());
     }
 }

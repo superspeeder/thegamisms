@@ -4,6 +4,7 @@ package org.delusion.engine.render.texture;
 import org.delusion.engine.utils.Utils;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryUtil;
 
@@ -19,6 +20,7 @@ public class Texture2D {
     private int handle;
     private int width;
     private int height;
+    private int format = GL_RGBA;
 
     public static void initTextures() {
         STBImage.stbi_set_flip_vertically_on_load(true);
@@ -32,6 +34,17 @@ public class Texture2D {
         applySettings(params);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    }
+
+    public Texture2D(int width, int height, int format, TexParams params) {
+        this.width = width;
+        this.height = height;
+        this.format = format;
+        handle = glCreateTextures(GL_TEXTURE_2D);
+        bind();
+        applySettings(params);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
     }
 
     public Texture2D(String path, TexParams params) throws IOException {
@@ -86,9 +99,21 @@ public class Texture2D {
     }
 
     public Vector4f pixelToUVs(float u1, float v1, float u2, float v2) {
-        Vector2f uv1 = pixelToUVs(new Vector2f(u1,v1));
-        Vector2f uv2 = pixelToUVs(new Vector2f(u2,v2));
+        Vector2f uv1 = pixelToUVs(new Vector2f(u1,height - v2));
+        Vector2f uv2 = pixelToUVs(new Vector2f(u2,height - v1));
         return new Vector4f(uv1.x,uv1.y,uv2.x,uv2.y);
+    }
+
+    public void setData(byte[][] map) {
+        ByteBuffer bb = BufferUtils.createByteBuffer(map.length * map[0].length);
+
+        for (int x = 0 ; x < map[0].length ; x++) {
+            for (int y = 0 ; y < map.length ; y++) {
+                bb.put(map[y][x]);
+            }
+        }
+
+        glTextureSubImage2D(handle, 0, 0, 0, map[0].length, map.length, format, GL_UNSIGNED_BYTE, bb.rewind());
     }
 
     public enum WrapMode {

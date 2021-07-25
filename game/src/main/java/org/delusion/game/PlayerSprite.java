@@ -1,10 +1,12 @@
 package org.delusion.game;
 
+import org.delusion.engine.math.AABB;
 import org.delusion.engine.math.Rect2i;
-import org.delusion.engine.render.mesh.Mesh;
 import org.delusion.engine.sprite.QuadSprite;
-import org.delusion.engine.sprite.Sprite;
-import org.delusion.engine.tilemap.Chunk;
+import org.delusion.game.tiles.SimpleProperty;
+import org.delusion.game.tiles.TileData;
+import org.delusion.game.utils.Direction;
+import org.delusion.game.world.tilemap.Chunk;
 import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.input.Key;
 import org.delusion.game.world.World;
@@ -12,17 +14,23 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PlayerSprite extends QuadSprite {
-    private static final float MOVE_ACCEL_X = 0.6f;
-    private static final float JUMP_STRENGTH = 7.0f;
-    private static float MAX_VEL_X = 5.0f;
-    private static float MAX_VEL_Y = 15.0f;
+    private static final float MOVE_ACCEL_X = 10.6f;
+    private static final float JUMP_STRENGTH = 607.0f;
+    private static final float MOVE_MOD = 50.0f;
+    private static final float MAX_VEL_X = 16.0f;
+    private static final float MAX_VEL_Y = 1500.0f;
+    private static final float MIN_DOWN_VEL_PLATFORM_FALL = -60.0f;
     private World world;
 
     private Vector2f velocity, acceleration;
     private boolean onGround = false;
+    private boolean crouching = false;
+    private Set<TileData> tilesOnTopOf = new HashSet<>();
 
 
     public PlayerSprite(Vector2f position, World world) {
@@ -36,102 +44,160 @@ public class PlayerSprite extends QuadSprite {
         switch (key) {
             case Left, A -> acceleration.x -= MOVE_ACCEL_X;
             case Right, D -> acceleration.x += MOVE_ACCEL_X;
-            case Up, W -> {
-                if (onGround && velocity.y < JUMP_STRENGTH)
+            case Up, W, Space -> {
+
+                boolean continue_ = true;
+                System.out.println("Jump?");
+                if (crouching) {
+                    System.out.println("Crouch Jump??");
+                    continue_ = onCrouchJump();
+                }
+
+                if (onGround && velocity.y < JUMP_STRENGTH && continue_)
                     velocity.y += JUMP_STRENGTH;
             }
-            case Space -> System.out.println(velocity);
+            case Down, S -> crouching = true;
         }
+    }
+
+    private boolean onCrouchJump() {
+        if (onGround) {
+            System.out.println("Crouch Jump?");
+            if (tilesOnTopOf.stream().allMatch(td -> {
+                System.out.println(td); return td.ty.hasSimpleProperty(SimpleProperty.Platform);
+            })) {
+                System.out.println("Crouch Jump");
+                velocity.y = MIN_DOWN_VEL_PLATFORM_FALL;
+                return false;
+            }
+        }
+        return true;
     }
 
     public void onKeyRelease(Key key) {
         switch (key) {
             case Left, A -> acceleration.x += MOVE_ACCEL_X;
             case Right, D -> acceleration.x -= MOVE_ACCEL_X;
+            case Down, S -> crouching = false;
         }
     }
 
-    public void update() {
-        moveX();
-        moveY();
+    public void update(float delta) {
+        updateScale();
+        moveX(delta);
+        moveY(delta);
+        tilesOnTopOf.clear();
+        if (onGround) {
+            Rect2i tilebb = getBoundingBoxTile();
+            tilesOnTopOf.addAll(world.getTiles(tilebb.getX(), tilebb.getY() - 1, tilebb.getX2(), tilebb.getY() - 1));
+        }
     }
 
-    private void moveX() {
-        velocity.x = Utils.clamp(velocity.x + acceleration.x + world.getGravity().x, -MAX_VEL_X, MAX_VEL_X);
-        move(velocity.x, 0);
+    private void updateScale() {
+        if (crouching) {
+            scale.set(16, 16);
+        } else {
+            scale.set(16, 32);
+        }
+    }
+
+    private static final Vector2f cscale = new Vector2f(Chunk.PIXELS_PER_TILE);
+    private void moveX(float delta) {
+        velocity.x = Utils.clamp(velocity.x + acceleration.x * delta + world.getGravity().x * delta, -MAX_VEL_X, MAX_VEL_X);
+        move(velocity.x * delta * MOVE_MOD, 0);
 
         if (acceleration.x == 0) {
-            velocity.x -= (velocity.x);
-            if (Math.abs(velocity.x) < 1.0f) velocity.x = 0;
+            if (onGround)
+                velocity.x -= (velocity.x) * 2 * delta;
+            else
+                velocity.x -= ((velocity.x) / 2.f) * delta;
+
+            if (onGround) {
+                if (Math.abs(velocity.x) < 5.0f) velocity.x = 0;
+            } else {
+                if (Math.abs(velocity.x) < 1.0f) velocity.x = 0;
+            }
         }
 
-        List<Vector2i> collisionTiles = getCollisions();
+        List<TileData> collisionTiles = getCollisions();
 
         if (velocity.x > 0) {
             // Moving right
 
-            for (Vector2i pos : collisionTiles) {
-                if (pos.x <= position.x + scale.x) {
-                    position.x = pos.x - scale.x;
+            for (TileData td : collisionTiles) {
+                if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Right)) {
+                    position.x = td.pos.x - scale.x;
                     velocity.x = 0;
                 }
             }
 
         } else {
             // Moving left
-            for (Vector2i pos : collisionTiles) {
-                if (pos.x + Chunk.PIXELS_PER_TILE >= position.x) {
-                    position.x = pos.x + Chunk.PIXELS_PER_TILE;
+            for (TileData td : collisionTiles) {
+                if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Left)) {
+                    position.x = td.pos.x + Chunk.PIXELS_PER_TILE;
                     velocity.x = 0;
                 }
             }
         }
     }
 
-    private List<Vector2i> getCollisions() {
-        List<Vector2i> collisions = new ArrayList<>();
-        Rect2i boundingBox = getBoundingBox();
+    public AABB getBoundingBox() {
+        return new AABB(position, scale);
+    }
 
-        for (int x = boundingBox.getX() ; x < boundingBox.getX2() ; x += Chunk.PIXELS_PER_TILE) {
-            for (int y = boundingBox.getY() ; y < boundingBox.getY2() ; y += Chunk.PIXELS_PER_TILE) {
-                if (world.isSolid(x / Chunk.PIXELS_PER_TILE,y / Chunk.PIXELS_PER_TILE)) {
-                    collisions.add(new Vector2i(x,y));
+    private List<TileData> getCollisions() {
+        List<TileData> collisions = new ArrayList<>();
+        Rect2i boundingBox = getBoundingBoxTile();
+
+        for (int x = boundingBox.getX() - 1; x < boundingBox.getX2() + 1; x += 1) {
+            for (int y = boundingBox.getY() - 1; y < boundingBox.getY2() + 1; y += 1) {
+                if (world.isSolid(x, y)) {
+                    collisions.add(new TileData(new Vector2i(x * Chunk.PIXELS_PER_TILE,y * Chunk.PIXELS_PER_TILE), world.getTile(x, y)));
                 }
             }
         }
         return collisions;
     }
 
-    public Rect2i getBoundingBox() {
+    public Rect2i getBoundingBoxTile() {
         return Rect2i.fromCorners(
-                Math.floorDiv((int)position.x,Chunk.PIXELS_PER_TILE)*Chunk.PIXELS_PER_TILE,
-                Math.floorDiv((int)position.y,Chunk.PIXELS_PER_TILE)*Chunk.PIXELS_PER_TILE,
-                (int) Math.ceil((position.x + scale.x) / Chunk.PIXELS_PER_TILE)*Chunk.PIXELS_PER_TILE,
-                (int) Math.ceil((position.y + scale.y) / Chunk.PIXELS_PER_TILE)*Chunk.PIXELS_PER_TILE);
+                Math.floorDiv((int)position.x,Chunk.PIXELS_PER_TILE),
+                Math.floorDiv((int)position.y,Chunk.PIXELS_PER_TILE),
+                (int) Math.ceil((position.x + scale.x) / Chunk.PIXELS_PER_TILE),
+                (int) Math.ceil((position.y + scale.y) / Chunk.PIXELS_PER_TILE));
     }
 
-    private void moveY() {
+    private void moveY(float delta) {
         onGround = false;
-        velocity.y += acceleration.y + world.getGravity().y;
-        move(0, Utils.clamp(velocity.y, -5.0f, 15.0f));
+        velocity.y += acceleration.y * delta + world.getGravity().y * delta;
+        move(0, Utils.clamp(velocity.y * delta, -5.0f, 15.0f) );
 
-        List<Vector2i> collisionTiles = getCollisions();
+        List<TileData> collisionTiles = getCollisions();
 
         if (velocity.y > 0) {
             // Moving up
 
-            for (Vector2i pos : collisionTiles) {
-                if (pos.y <= position.y + scale.y) {
-                    position.y = pos.y - scale.y;
+            for (TileData td : collisionTiles) {
+//                if (pos.y <= position.y + scale.y && pos.y + Chunk.PIXELS_PER_TILE > position.y) {
+                if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Up)) {
+                    position.y = td.pos.y - scale.y;
                     velocity.y = 0;
                 }
             }
 
         } else {
             // Moving Down
-            for (Vector2i pos : collisionTiles) {
-                if (pos.y + Chunk.PIXELS_PER_TILE >= position.y) {
-                    position.y = pos.y + Chunk.PIXELS_PER_TILE;
+            for (TileData td : collisionTiles) {
+//                if (pos.y + Chunk.PIXELS_PER_TILE >= position.y && pos.y < position.y + scale.y) {
+                if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Down)) {
+                    if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && velocity.y < MIN_DOWN_VEL_PLATFORM_FALL && crouching) {
+                        continue;
+                    }
+                    else if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && position.y + 5 < td.pos.y + Chunk.PIXELS_PER_TILE) {
+                        continue;
+                    }
+                    position.y = td.pos.y + Chunk.PIXELS_PER_TILE;
                     velocity.y = 0;
                     onGround = true;
                 }

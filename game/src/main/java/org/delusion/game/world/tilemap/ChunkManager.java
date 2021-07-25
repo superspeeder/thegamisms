@@ -1,12 +1,15 @@
-package org.delusion.engine.tilemap;
+package org.delusion.game.world.tilemap;
 
 import org.delusion.engine.render.Renderer;
 import org.delusion.engine.render.texture.Tileset;
 import org.delusion.engine.utils.Utils;
+import org.delusion.game.tiles.TileType;
+import org.delusion.game.world.World;
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
+import org.joml.Vector4f;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -18,6 +21,7 @@ public class ChunkManager {
 //    private ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
     private Tileset tileset;
     private ChunkPos oldCenterChunk;
+    private World world;
 
     public ChunkManager(Tileset tileset) {
         this.tileset = tileset;
@@ -55,20 +59,7 @@ public class ChunkManager {
     }
 
     private void genChunk(Chunk c, int xx, int yy) {
-
-
-        c.compute((x,y) -> {
-            int truex = x + xx * Chunk.SIZE;
-            int truey = y + yy * Chunk.SIZE;
-            int h = (int) (Math.sin((double)truex / 32.0) * 32.0f);
-            if (truey > h) {
-                return -1;
-            } else if (truey == h) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
+        c.compute((x,y) -> world.computeTile(x,y,xx,yy));
         System.out.printf("Finished generation of chunk (%d, %d)\n",xx,yy);
     }
 
@@ -97,15 +88,26 @@ public class ChunkManager {
         return new Vector2i(Math.floorMod((int) tile.x,Chunk.SIZE), Math.floorMod((int) tile.y,Chunk.SIZE));
     }
 
-    public int getTile(int x, int y) {
+    public TileType getTile(int x, int y) {
         ChunkPos chunk = chunkPosFromTile(new Vector2f(x,y));
-        if (!chunks.containsKey(chunk)) return -1;
+        if (!chunks.containsKey(chunk)) return TileType.Air;
         Vector2i rel = relative(new Vector2f(x,y));
-        return getChunk(chunk).get(rel);
+
+//        if (x == -1)
+//            System.out.println("(" + x + ", " + y + ") => Chunk: " + chunk + ", Rel: (" + rel.x + ", " + rel.y + ")");
+        TileType tt = getChunk(chunk).get(rel);
+        if (tt == null) {
+            return TileType.Air;
+        }
+        return tt;
     }
 
     private Chunk getChunk(ChunkPos chunk) {
         return chunks.get(chunk);
+    }
+
+    public void setWorld(World world) {
+        this.world = world;
     }
 
     public static class ChunkPos {
@@ -146,10 +148,7 @@ public class ChunkManager {
 
         @Override
         public String toString() {
-            return "ChunkPos{" +
-                    "x=" + x +
-                    ", y=" + y +
-                    '}';
+            return "(" + x + ", " + y + ")";
         }
 
         public Vector2i vec() {
