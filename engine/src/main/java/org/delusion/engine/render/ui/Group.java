@@ -24,11 +24,14 @@ public class Group extends Node {
     }
 
     public void add(Node child) {
+        markDirty();
         children.add(child);
         child.setParent(this);
     }
 
+
     public void addAll(Node... childs) {
+        markDirty();
         children.addAll(Arrays.asList(childs));
         for (Node child : childs) {
             child.setParent(this);
@@ -36,6 +39,7 @@ public class Group extends Node {
     }
 
     public void addAll(Collection<? extends Node> childs) {
+        markDirty();
         children.addAll(childs);
         for (Node child : childs) {
             child.setParent(this);

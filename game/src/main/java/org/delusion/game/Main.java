@@ -11,6 +11,7 @@ import org.delusion.engine.render.shader.ShaderProgram;
 import org.delusion.engine.render.texture.Texture2D;
 import org.delusion.engine.render.texture.Tileset;
 import org.delusion.engine.render.ui.ColoredRect;
+import org.delusion.engine.render.ui.Group;
 import org.delusion.engine.sprite.Batch;
 import org.delusion.engine.sprite.QuadSprite;
 import org.delusion.game.tiles.TileType;
@@ -21,6 +22,7 @@ import org.delusion.game.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.stb.STBEasyFont;
 
 /*
 To-Do List
@@ -65,6 +67,7 @@ public class Main extends App {
     private Texture2D tex_map;
     private RenderQueue rq;
     private ShaderProgram uiProgram;
+    private Group rootUI;
 
     public Main(Settings settings) {
         super(settings);
@@ -111,13 +114,21 @@ public class Main extends App {
         overlay = new QuadSprite();
 
         rq = new RenderQueue();
-        rq.queue(new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), true, new Color(0, 0, 1, 0.4f)));
-        rq.queue(new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), false, Color.WHITE));
+//        rq.queue(new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), true, new Color(0, 0, 1, 0.4f)));
+//        rq.queue(new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), false, Color.WHITE));
+        rootUI = new Group();
+        rootUI.addAll(
+                new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), true, new Color(0, 0, 1, 0.4f)),
+                new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), false, Color.WHITE)
+        );
+
 
         uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
 
         getWindow().hideCursor();
         setInputHandler(new InputManager(this, renderer));
+        rootUI.draw(rq, batch);
+
     }
 
     double aaaa = 0;

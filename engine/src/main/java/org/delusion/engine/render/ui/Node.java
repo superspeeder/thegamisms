@@ -6,8 +6,13 @@ import org.delusion.engine.sprite.Batch;
 public abstract class Node {
 
     private Node parent;
+    protected boolean dirty;
 
     public Node() {
+    }
+
+    public void markDirty() {
+        dirty = true;
     }
 
     public void setParent(Node p) {
