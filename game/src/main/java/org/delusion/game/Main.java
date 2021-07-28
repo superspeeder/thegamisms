@@ -12,17 +12,23 @@ import org.delusion.engine.render.texture.Texture2D;
 import org.delusion.engine.render.texture.Tileset;
 import org.delusion.engine.render.ui.ColoredRect;
 import org.delusion.engine.render.ui.Group;
+import org.delusion.engine.render.ui.Node;
+import org.delusion.engine.render.ui.TexturedRect;
 import org.delusion.engine.sprite.Batch;
 import org.delusion.engine.sprite.QuadSprite;
+import org.delusion.engine.window.input.InputHandler;
+import org.delusion.game.inventory.*;
 import org.delusion.game.tiles.TileType;
+import org.delusion.engine.render.PackedTextureManager;
 import org.delusion.game.world.tilemap.ChunkManager;
 import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.Window;
 import org.delusion.game.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.stb.STBEasyFont;
 
 /*
 To-Do List
@@ -68,9 +74,22 @@ public class Main extends App {
     private RenderQueue rq;
     private ShaderProgram uiProgram;
     private Group rootUI;
+    private ShaderProgram uiTexturedProgram;
+    private PackedTextureManager textureManager = new PackedTextureManager();
+    private Hotbar hotbar;
+    private Items items;
 
     public Main(Settings settings) {
         super(settings);
+    }
+
+    public void initTextures() {
+        Texture2D.TexParams texParams = new Texture2D.TexParams()
+                .setWrap(Texture2D.WrapMode.ClampToEdge, Texture2D.WrapMode.ClampToEdge)
+                .setFilter(Texture2D.Filter.Nearest, Texture2D.Filter.Nearest);
+
+        Slot.registerTextures(textureManager, texParams);
+        Items.registerTextures(textureManager, texParams);
     }
 
     @Override
@@ -78,6 +97,9 @@ public class Main extends App {
         TileType.init();
 
         renderer = new Renderer(this);
+        renderer.setPackedTextureManager(textureManager);
+
+        Item.setRenderer(renderer);
 
         program = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/tile.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/tile.frag.glsl"));
         playerProgram = new ShaderProgram(new Shader(Shader.Type.Vertex,"/shaders/player.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/player.frag.glsl"));
@@ -87,6 +109,10 @@ public class Main extends App {
                 .setFilter(Texture2D.Filter.Nearest, Texture2D.Filter.Nearest);
         tex = Utils.ignoreErrors(() -> new Texture2D("/textures/tmap.png", texParams));
         tex2 = Utils.ignoreErrors(() -> new Texture2D("/textures/cursor.png", texParams.setFilter(Texture2D.Filter.Linear, Texture2D.Filter.Nearest)));
+
+
+        initTextures();
+        items = new Items(renderer);
 
         tex_map = new Texture2D(64,64, GL30.GL_R8UI, texParams);
         byte[][] map = new byte[64][64];
@@ -113,21 +139,27 @@ public class Main extends App {
 
         overlay = new QuadSprite();
 
+        uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
+        uiTexturedProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.textured.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.textured.frag.glsl"));
+
+
         rq = new RenderQueue();
-//        rq.queue(new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), true, new Color(0, 0, 1, 0.4f)));
-//        rq.queue(new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), false, Color.WHITE));
         rootUI = new Group();
+        hotbar = new Hotbar(uiTexturedProgram, textureManager);
         rootUI.addAll(
-                new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), true, new Color(0, 0, 1, 0.4f)),
-                new ColoredRect(new Vector2f(0, 472), new Vector2f(1700, 64), false, Color.WHITE)
+            hotbar
         );
 
+        hotbar.getSlot(0).setContents(new Stack(items.WOOD_PLANKS, 1));
+        hotbar.getSlot(1).setContents(new Stack(items.GEM1, 4));
+        hotbar.getSlot(2).setContents(new Stack(items.WOOD_LOGS, 43));
+        hotbar.getSlot(3).setContents(new Stack(items.WOOD_STICKS, 100));
 
-        uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
 
-        getWindow().hideCursor();
+//        getWindow().hideCursor();
         setInputHandler(new InputManager(this, renderer));
         rootUI.draw(rq, batch);
+
 
     }
 
@@ -151,7 +183,7 @@ public class Main extends App {
         renderer.useShader(program);
         program.uniform1f("uTime", getWindow().getTime());
 
-        tex.bind();
+        renderer.setTex(tex,0);
         renderer.setModel(new Matrix4f().identity());
         renderer.setViewProjection(camera.getCombined());
 
@@ -164,12 +196,11 @@ public class Main extends App {
         renderer.useShader(playerProgram);
         renderer.setModel(player.getModel());
         renderer.setViewProjection(camera.getCombined());
-        tex2.bind();
+        renderer.setTex(tex2, 0);
         playerProgram.uniform1f("uTime", getWindow().getTime());
         player.draw(renderer);
 
         renderer.setViewProjection(camera.getProjection());
-        renderer.useShader(uiProgram);
         rq.draw(renderer);
     }
 
@@ -182,11 +213,33 @@ public class Main extends App {
         new Main(new Settings(new Window.Settings()
                 .setResizable(true).setMaximized(true))
                 .setWindowTitle("The Game!")
-                .enableFullscreen(0))
-                .run();
+//                .enableFullscreen(0)
+        ).run();
     }
 
     public PlayerSprite getPlayer() {
         return player;
+    }
+
+    public Node getRootUI() {
+        return rootUI;
+    }
+
+    public Vector2f unproject(Vector2f screen) {
+        int[] viewport = getWindow().getViewport();
+        Vector3f vec = new Vector3f();
+        new Matrix4f(camera.getCombined()).unproject(new Vector3f(screen, 0.0f), viewport, vec);
+        System.out.println(vec);
+        return new Vector2f(vec.x,vec.y);
+    }
+
+    public Vector2f unprojectUI(Vector2f screen) {
+        int[] viewport = getWindow().getViewport();
+        Vector2f homo = new Vector2f(screen).mul(2.0f / viewport[2], 2.0f / viewport[3]);
+        homo.x -= 1.0f;
+        homo.y = (2 - homo.y) - 1.0f;
+        Vector2f vector2f = new Vector2f(homo.x * 960, homo.y * 540);
+        System.out.println(vector2f.x + ", " + vector2f.y + " " + screen.x + ", " + screen.y + " " + homo.x + ", " + homo.y);
+        return vector2f;
     }
 }

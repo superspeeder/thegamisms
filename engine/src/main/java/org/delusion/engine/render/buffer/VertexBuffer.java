@@ -77,4 +77,12 @@ public class VertexBuffer {
         values.set(i, v);
         dirty = true;
     }
+
+    public void set(List<Float> vals) {
+        dirty = true;
+        if (values.size() < vals.size()) {
+            sizeDirty = true;
+        }
+        values = vals;
+    }
 }

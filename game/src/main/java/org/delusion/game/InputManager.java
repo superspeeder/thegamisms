@@ -54,7 +54,7 @@ public class InputManager implements InputHandler {
 
     @Override
     public void onClick(int button, int mods) {
-
+        app.getRootUI().onClick(app.unprojectUI(app.getWindow().getMousePos()),button, mods);
     }
 
     @Override

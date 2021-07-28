@@ -10,7 +10,9 @@ public enum TileType {
     Air(-1, false, Direction.none(), Set.of(SimpleProperty.NoRender)),
     Dirt(0, true, Direction.all(), Set.of()),
     Grass(1, true, Direction.all(), Set.of()),
-    Platform(2, true, Set.of(Direction.Down), Set.of(SimpleProperty.Platform));
+    Platform(2, true, Set.of(Direction.Down), Set.of(SimpleProperty.Platform)),
+    Stone(3, true, Direction.all(), Set.of())
+    ;
 
 
     private final int i;

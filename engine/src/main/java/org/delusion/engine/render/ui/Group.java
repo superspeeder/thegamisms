@@ -2,6 +2,7 @@ package org.delusion.engine.render.ui;
 
 import org.delusion.engine.render.RenderQueue;
 import org.delusion.engine.sprite.Batch;
+import org.joml.Vector2f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,5 +49,15 @@ public class Group extends Node {
 
     public List<Node> getChildren() {
         return children;
+    }
+
+    @Override
+    public void onClick(Vector2f pos, int button, int mods) {
+        super.onClick(pos, button, mods);
+        for (Node c : children) {
+            if (c.pointWithin(pos)) {
+                c.onClick(pos, button, mods);
+            }
+        }
     }
 }

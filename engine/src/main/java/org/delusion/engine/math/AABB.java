@@ -10,6 +10,10 @@ public class AABB {
         this.size = new Vector2f(scale);
     }
 
+    public static AABB centerPos(Vector2f pos, Vector2f size) {
+        return new AABB(new Vector2f(pos.x - size.x / 2, pos.y - size.y / 2), size);
+    }
+
     public Vector2f getBottomLeft() {
         return pos;
     }

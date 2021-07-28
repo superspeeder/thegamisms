@@ -2,6 +2,7 @@ package org.delusion.engine;
 
 import org.delusion.engine.render.texture.Texture2D;
 import org.delusion.engine.render.ui.Rect;
+import org.delusion.engine.render.ui.TexturedRect;
 import org.delusion.engine.sprite.Batch;
 import org.delusion.engine.sprite.QuadSprite;
 import org.delusion.engine.utils.Utils;
@@ -40,6 +41,7 @@ public abstract class App {
         Utils.ignoreErrors(QuadSprite::initMesh);
         Batch.initStatic();
         Rect.init();
+        TexturedRect.init();
     }
 
     public void run() {

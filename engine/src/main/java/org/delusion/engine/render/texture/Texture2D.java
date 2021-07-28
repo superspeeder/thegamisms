@@ -83,7 +83,7 @@ public class Texture2D {
 
 
     public void bind() {
-        glBindTexture(GL_TEXTURE_2D, handle);
+        glBindTextureUnit(0, handle);
     }
 
     public int getHandle() {

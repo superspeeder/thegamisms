@@ -1,6 +1,5 @@
 package org.delusion.game.world;
 
-import org.delusion.game.PlayerSprite;
 import org.delusion.game.tiles.TileData;
 import org.delusion.game.utils.Direction;
 import org.delusion.game.world.tilemap.Chunk;
@@ -39,12 +38,12 @@ public class World {
         }
         if (truey > h) {
             return TileType.Air;
+        } else if (truey == h) {
+            return TileType.Grass;
+        } else if (truey > h - 6) {
+            return TileType.Dirt;
         } else {
-            if (Math.floorMod(truex,2) == 0) {
-                return TileType.Dirt;
-            } else {
-                return TileType.Grass;
-            }
+            return TileType.Stone;
         }
     }
 

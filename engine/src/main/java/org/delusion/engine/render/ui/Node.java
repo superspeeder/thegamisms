@@ -2,6 +2,7 @@ package org.delusion.engine.render.ui;
 
 import org.delusion.engine.render.RenderQueue;
 import org.delusion.engine.sprite.Batch;
+import org.joml.Vector2f;
 
 public abstract class Node {
 
@@ -20,4 +21,15 @@ public abstract class Node {
     }
 
     public abstract void draw(RenderQueue rq, Batch batch);
+
+    public void onClick(Vector2f position, int button, int mods) {
+    }
+
+    public boolean pointWithin(Vector2f pos) {
+        return true;
+    }
+
+    public Node getParent() {
+        return parent;
+    }
 }

@@ -3,6 +3,7 @@ package org.delusion.engine.render.shader;
 import org.delusion.engine.render.Color;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
@@ -106,5 +107,10 @@ public class ShaderProgram {
     public void uniformColor(String name, Color col) {
         if (col != null)
             uniform4f(name, col.r(), col.g(), col.b(), col.a());
+    }
+
+    public void uniform4f(String name, Vector4f vec) {
+        if (vec != null)
+            uniform4f(name, vec.x, vec.y, vec.z, vec.w);
     }
 }

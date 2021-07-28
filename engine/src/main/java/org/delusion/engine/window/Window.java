@@ -4,12 +4,17 @@ import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.input.InputHandler;
 import org.delusion.engine.window.input.Key;
 import org.joml.Vector2d;
+import org.joml.Vector2f;
 import org.joml.Vector2i;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCharCallbackI;
 import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 import org.lwjgl.glfw.GLFWMouseButtonCallbackI;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL45;
+import org.lwjgl.system.MemoryStack;
 
+import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -188,7 +193,15 @@ public class Window {
         glfwSetCharCallback(handle, this::chartypecbk);
         glfwSetCharModsCallback(handle, this::charmodstypecbk);
         glfwSetCursorPosCallback(handle, this::mousemotioncbk);
+        glfwSetFramebufferSizeCallback(handle, this::framebuffersizecbk);
 
+    }
+
+    private void framebuffersizecbk(long window, int x, int y) {
+        try {
+            GL45.glViewport(0, 0, x, y);
+        } catch (Exception ignored) {
+        }
     }
 
     private void kcbk(long window, int key,int scancode, int action, int mods) {
@@ -301,6 +314,21 @@ public class Window {
 
     public boolean getKey(Key key) {
         return glfwGetKey(handle, key.getID()) == GLFW_PRESS;
+    }
+
+    public Vector2f getMousePos() {
+        DoubleBuffer x = BufferUtils.createDoubleBuffer(1);
+        DoubleBuffer y = BufferUtils.createDoubleBuffer(1);
+        glfwGetCursorPos(handle,x,y);
+        return new Vector2f((float)(x.rewind().get()), (float)(y.rewind().get()));
+    }
+
+    public int[] getViewport() {
+        IntBuffer h = BufferUtils.createIntBuffer(1);
+        IntBuffer w = BufferUtils.createIntBuffer(1);
+        glfwGetWindowSize(handle,w, h);
+        int[] vp = {0, 0, w.rewind().get(), h.rewind().get()};
+        return vp;
     }
 
 

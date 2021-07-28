@@ -1,5 +1,7 @@
 package org.delusion.engine.utils;
 
+import org.delusion.engine.math.AABB;
+import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.lwjgl.BufferUtils;
 
@@ -85,6 +87,10 @@ public class Utils {
 
     public static int mrdist(Vector2i v1, Vector2i v2) {
         return Math.max(Math.abs(v1.x-v2.x), Math.abs(v1.y-v2.y));
+    }
+
+    public static boolean rectContains(Vector2f rectpos, Vector2f size, Vector2f ppos) {
+        return new AABB(rectpos, size).containsPoint(ppos);
     }
 
 
