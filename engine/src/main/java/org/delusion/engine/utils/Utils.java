@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,6 +93,33 @@ public class Utils {
 
     public static boolean rectContains(Vector2f rectpos, Vector2f size, Vector2f ppos) {
         return new AABB(rectpos, size).containsPoint(ppos);
+    }
+
+    public static ByteBuffer loadByteBufferResource(String path, int size) throws IOException {
+        InputStream istream = Utils.class.getResourceAsStream(path);
+        byte[] bytes = istream.readAllBytes();
+        if (bytes.length == 0) {
+            return null;
+        }
+
+        ByteBuffer bb = BufferUtils.createByteBuffer(size);
+        bb.put(bytes);
+        bb.rewind();
+        return bb;
+    }
+
+    public static Collection<Integer> offsetAll(int i, int... vals) {
+        List<Integer> out = new ArrayList<>();
+        for (int x : vals) {
+            out.add(x + i);
+        }
+        return out;
+    }
+
+    public static FloatBuffer makeFloatBuffer(List<Float> floats) {
+        FloatBuffer fb = BufferUtils.createFloatBuffer(floats.size());
+        fb.put(listToArrayf(floats));
+        return fb;
     }
 
 

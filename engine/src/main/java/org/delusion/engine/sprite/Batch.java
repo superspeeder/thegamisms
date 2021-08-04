@@ -24,6 +24,13 @@ public class Batch {
     private VertexArray vao;
     private int quadsBatched, verticesBatched;
 
+    public Batch(int quadmax) { // 5 * 4 * 4
+        vbo = new VertexBuffer(VERTEX_SIZE * VERTICES_PER_QUAD * quadmax);
+        vao = new VertexArray().bindVertexBuffer(vbo, 3, 2).elementBuffer(ebo);
+        quadsBatched = 0;
+        verticesBatched = 0;
+    }
+
     public static void initStatic() {
         int[] eboD = new int[MAX_INDICES];
         for (int i = 0 ; i < MAX_QUADS ; i++) {
@@ -40,7 +47,7 @@ public class Batch {
     }
 
     public Batch() {
-        vbo = new VertexBuffer(MAX_VBO_SIZE);
+        vbo = new VertexBuffer(MAX_VBO_SIZE / Float.BYTES);
         vao = new VertexArray().bindVertexBuffer(vbo, 3, 2).elementBuffer(ebo);
         quadsBatched = 0;
         verticesBatched = 0;
@@ -82,4 +89,8 @@ public class Batch {
     }
 
 
+    public void dispose() {
+        vbo.dispose();
+        vao.dispose();
+    }
 }

@@ -1,7 +1,9 @@
 package org.delusion.engine.render.buffer;
 
 import org.delusion.engine.utils.Utils;
+import org.lwjgl.BufferUtils;
 
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -77,5 +79,22 @@ public class ElementBuffer {
 
     public int getHandle() {
         return handle;
+    }
+
+    public int getCount() {
+        return values.size();
+    }
+
+    public void set(List<Integer> ebov) {
+        bind();
+        values = ebov;
+        IntBuffer buf = BufferUtils.createIntBuffer(values.size());
+        for (int i : values) {
+            buf.put(i);
+        }
+
+        buf.rewind();
+
+        glNamedBufferData(handle, buf, mode.getValue());
     }
 }

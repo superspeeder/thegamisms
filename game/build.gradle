@@ -115,7 +115,10 @@ jar {
     manifest {
         attributes(
                 "Main-Class": "org.delusion.game.Main",
-                "Class-Path": sourceSets.main.runtimeClasspath.getAsPath()
         )
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }

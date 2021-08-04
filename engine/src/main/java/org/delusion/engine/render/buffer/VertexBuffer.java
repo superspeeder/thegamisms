@@ -1,5 +1,6 @@
 package org.delusion.engine.render.buffer;
 
+import com.fasterxml.jackson.core.TreeNode;
 import org.delusion.engine.utils.Utils;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class VertexBuffer {
         handle = glCreateBuffers();
         bind(); unbind();
         glNamedBufferData(handle, Utils.listToArrayf(values), mode.getValue());
+        System.out.println("Created buffer with " + (values.size() * Float.BYTES) + " bytes of data");
     }
 
     public VertexBuffer(List<Float> values) {
@@ -34,6 +36,7 @@ public class VertexBuffer {
         handle = glCreateBuffers();
         bind(); unbind();
         glNamedBufferData(handle, 0, mode.getValue());
+        System.out.println("Created buffer with 0 bytes of data");
     }
 
     public VertexBuffer(int size, BufferMode mode) {
@@ -43,6 +46,7 @@ public class VertexBuffer {
         handle = glCreateBuffers();
         bind(); unbind();
         glNamedBufferData(handle, size * Float.BYTES, mode.getValue());
+        System.out.println("Created buffer with " + (size * Float.BYTES) + " bytes of data");
     }
 
     public void update() {
@@ -84,5 +88,13 @@ public class VertexBuffer {
             sizeDirty = true;
         }
         values = vals;
+    }
+
+    public List<Float> getValues() {
+        return values;
+    }
+
+    public void dispose() {
+        glDeleteBuffers(handle);
     }
 }

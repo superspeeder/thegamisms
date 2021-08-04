@@ -65,7 +65,6 @@ public class Chunk {
     }
 
     public void save() {
-
     }
 
     public void compute(BiFunction<Integer,Integer, TileType> computeF) {
@@ -83,7 +82,8 @@ public class Chunk {
 
     public void draw(Renderer renderer, Tileset tileset) {
         if (batch == null) {
-            batch = new Batch();
+            batch = new Batch(SIZE * SIZE);
+            System.out.println("Created batch for chunk");
         }
         if (dirty) {
             batch.begin();
@@ -105,5 +105,9 @@ public class Chunk {
 
     public TileType get(Vector2i rel) {
         return get(rel.x,rel.y);
+    }
+
+    public void dispose() {
+        this.batch.dispose();
     }
 }

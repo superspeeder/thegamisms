@@ -10,10 +10,7 @@ import org.delusion.engine.render.shader.Shader;
 import org.delusion.engine.render.shader.ShaderProgram;
 import org.delusion.engine.render.texture.Texture2D;
 import org.delusion.engine.render.texture.Tileset;
-import org.delusion.engine.render.ui.ColoredRect;
-import org.delusion.engine.render.ui.Group;
-import org.delusion.engine.render.ui.Node;
-import org.delusion.engine.render.ui.TexturedRect;
+import org.delusion.engine.render.ui.*;
 import org.delusion.engine.sprite.Batch;
 import org.delusion.engine.sprite.QuadSprite;
 import org.delusion.engine.window.input.InputHandler;
@@ -29,6 +26,8 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.opengl.GL30;
+
+import java.io.IOException;
 
 /*
 To-Do List
@@ -70,14 +69,15 @@ public class Main extends App {
     private World world;
     private PlayerSprite player;
     private QuadSprite overlay;
-    private Texture2D tex_map;
     private RenderQueue rq;
     private ShaderProgram uiProgram;
+    private ShaderProgram textProgram;
     private Group rootUI;
     private ShaderProgram uiTexturedProgram;
     private PackedTextureManager textureManager = new PackedTextureManager();
     private Hotbar hotbar;
     private Items items;
+    private Font font;
 
     public Main(Settings settings) {
         super(settings);
@@ -114,20 +114,6 @@ public class Main extends App {
         initTextures();
         items = new Items(renderer);
 
-        tex_map = new Texture2D(64,64, GL30.GL_R8UI, texParams);
-        byte[][] map = new byte[64][64];
-        for (int x = 0 ; x < 64 ; x++) {
-            for (int y = 0 ; y < 64 ; y++) {
-                if (y < 16) {
-                    map[y][x] = Byte.MIN_VALUE + 1;
-
-                } else {
-                    map[y][x] = Byte.MIN_VALUE;
-                }
-            }
-        }
-        tex_map.setData(map);
-
         ts = new Tileset(tex, new Vector2f(16, 16));
         chunkManager = new ChunkManager(ts);
 
@@ -140,12 +126,23 @@ public class Main extends App {
         overlay = new QuadSprite();
 
         uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
+        textProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.text.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.text.frag.glsl"));
         uiTexturedProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.textured.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.textured.frag.glsl"));
 
+        try {
+            font = new Font("/fonts/Orbitron-ExtraBold.ttf", 24);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         rq = new RenderQueue();
         rootUI = new Group();
-        hotbar = new Hotbar(uiTexturedProgram, textureManager);
+        Stack.setFont(font);
+
+//        Text text = new Text("Hello World!", font, new Vector2f(0, -50), textProgram);
+//        rq.queue(text);
+
+        hotbar = new Hotbar(uiTexturedProgram, textProgram, textureManager);
         rootUI.addAll(
             hotbar
         );
@@ -159,6 +156,8 @@ public class Main extends App {
 //        getWindow().hideCursor();
         setInputHandler(new InputManager(this, renderer));
         rootUI.draw(rq, batch);
+
+
 
 
     }
@@ -202,6 +201,7 @@ public class Main extends App {
 
         renderer.setViewProjection(camera.getProjection());
         rq.draw(renderer);
+
     }
 
     @Override
@@ -211,7 +211,7 @@ public class Main extends App {
 
     public static void main(String[] args) {
         new Main(new Settings(new Window.Settings()
-                .setResizable(true).setMaximized(true))
+                .setResizable(true).setMaximized(true).setOpenglDebugContext(false))
                 .setWindowTitle("The Game!")
 //                .enableFullscreen(0)
         ).run();

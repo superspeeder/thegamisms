@@ -7,11 +7,15 @@ import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 import static org.lwjgl.opengl.GL46.*;
 
 public class ShaderProgram {
     private int handle;
+    private Map<String,Integer> uniformLocations = new HashMap<>();
 
     public ShaderProgram(Shader... shaders) {
         handle = glCreateProgram();
@@ -23,6 +27,16 @@ public class ShaderProgram {
         if (glGetProgrami(handle, GL_LINK_STATUS) != GL_TRUE) {
             System.out.println(glGetProgramInfoLog(handle));
         }
+
+        System.out.println(handle + ":");
+        int uc = glGetProgrami(handle, GL_ACTIVE_UNIFORMS);
+        System.out.println("Active Uniforms: ");
+        for (int i = 0 ; i < uc ; i++) {
+            System.out.println(i + ": " + glGetActiveUniformName(handle, i));
+            uniformLocations.put(glGetActiveUniformName(handle, i), i);
+        }
+
+
     }
 
     public void use() {
@@ -30,7 +44,7 @@ public class ShaderProgram {
     }
 
     private int getUniformLocation(String name) {
-        return glGetUniformLocation(handle, name);
+        return uniformLocations.getOrDefault(name, -1);
     }
 
     public ShaderProgram uniform1f(String name, float x) {
@@ -96,7 +110,8 @@ public class ShaderProgram {
     public ShaderProgram uniformMat4(String name, Matrix4f mat) {
         FloatBuffer fb = BufferUtils.createFloatBuffer(16);
         mat.get(fb);
-        glProgramUniformMatrix4fv(handle, getUniformLocation(name), false, fb);
+        int uniformLocation = getUniformLocation(name);
+        glProgramUniformMatrix4fv(handle, uniformLocation, false, fb);
         return this;
     }
 

@@ -10,9 +10,9 @@ public class Hotbar extends Group {
 
     private int currentSelection = 0;
 
-    public Hotbar(ShaderProgram sh, PackedTextureManager tm) {
+    public Hotbar(ShaderProgram sh, ShaderProgram textSh, PackedTextureManager tm) {
         for (int i = -5 ; i < 5; i++) {
-            slots[i + 5] = new Slot(new Vector2f(i * 72 + 36,492), new Vector2f(64, 64), sh, tm);
+            slots[i + 5] = new Slot(new Vector2f(i * 72 + 36,492), new Vector2f(64, 64), sh, textSh, tm);
         }
 
         slots[0].select();

@@ -10,6 +10,10 @@ import org.delusion.engine.window.Monitor;
 import org.delusion.engine.window.Window;
 import org.delusion.engine.window.input.InputHandler;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL43;
+import org.lwjgl.opengl.GLUtil;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.IMGFilterCubic;
 import org.lwjgl.vulkan.VkApplicationInfo;
 
@@ -36,6 +40,10 @@ public abstract class App {
         window.makeContextCurrent();
 
         window.setVSyncEnabled(settings.enableVSync);
+
+        if (settings.windowSettings.isOpenglDebugContext()) {
+            GLUtil.setupDebugMessageCallback();
+        }
 
         Texture2D.initTextures();
         Utils.ignoreErrors(QuadSprite::initMesh);

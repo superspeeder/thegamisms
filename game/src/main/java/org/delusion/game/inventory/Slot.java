@@ -32,17 +32,17 @@ public class Slot extends TexturedRect {
         textureManager.addTexture("slot", "trash", 2);
     }
 
-    public Slot(Vector2f pos, Vector2f size, ShaderProgram sh, PackedTextureManager packedTextureManager) {
-        this(pos,size,sh,packedTextureManager,Type.Normal);
+    public Slot(Vector2f pos, Vector2f size, ShaderProgram sh,  ShaderProgram textSh, PackedTextureManager packedTextureManager) {
+        this(pos,size,sh, textSh, packedTextureManager,Type.Normal);
     }
 
-    public Slot(Vector2f pos, Vector2f size, ShaderProgram sh, PackedTextureManager packedTextureManager, Type type) {
+    public Slot(Vector2f pos, Vector2f size, ShaderProgram sh,  ShaderProgram textSh, PackedTextureManager packedTextureManager, Type type) {
         super(pos, size, true, packedTextureManager.getTileset("slot").getTexture(), packedTextureManager.getTextureUVs("slot", type.name().toLowerCase()), sh);
         texman = packedTextureManager;
         this.type = type;
         origintype = type;
         contents = null;
-        renderableStack = new Stack.Renderable(pos, new Vector2f(size).mul(0.75f), sh);
+        renderableStack = new Stack.Renderable(pos, new Vector2f(size).mul(0.75f), sh, textSh);
         add(renderableStack);
     }
 

@@ -31,11 +31,13 @@ public class ChunkManager {
         if (!centerChunk.equals(oldCenterChunk)) {
             oldCenterChunk = centerChunk;
             System.out.println("Crossed into new chunk: " + centerChunk);
+            ConcurrentLinkedQueue<Chunk> cs = new ConcurrentLinkedQueue<>();
             new Thread(() -> {
                 // Validate chunks
                 List<ChunkPos> invalidCs = chunks.keySet().parallelStream().filter(pos -> Utils.mrdist(centerChunk.vec(), pos.vec()) > MAX_DIST).collect(Collectors.toList());
                 for (ChunkPos v : invalidCs) {
                     chunks.get(v).save();
+                    cs.add(chunks.get(v));
                     chunks.remove(v);
                 }
 
@@ -49,6 +51,9 @@ public class ChunkManager {
                 }
 
             }).start();
+            for (Chunk c : cs) {
+                c.dispose();
+            }
         }
     }
 

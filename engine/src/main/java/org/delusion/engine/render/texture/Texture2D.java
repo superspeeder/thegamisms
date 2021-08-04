@@ -22,6 +22,17 @@ public class Texture2D {
     private int height;
     private int format = GL_RGBA;
 
+    public Texture2D(int width, int height, int format, TexParams params, ByteBuffer pixels) {
+        this.width = width;
+        this.height = height;
+        this.format = format;
+        handle = glCreateTextures(GL_TEXTURE_2D);
+        bind();
+        applySettings(params);
+        System.out.println("creating el texture");
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
+    }
+
     public static void initTextures() {
         STBImage.stbi_set_flip_vertically_on_load(true);
     }
@@ -114,6 +125,11 @@ public class Texture2D {
         }
 
         glTextureSubImage2D(handle, 0, 0, 0, map[0].length, map.length, format, GL_UNSIGNED_BYTE, bb.rewind());
+    }
+
+    public void setData(ByteBuffer bitmap, int bitmapW, int bitmapH, int type) {
+        bind();
+        glTexImage2D(GL_TEXTURE_2D, 0, format, bitmapW, bitmapH, 0, format, type, bitmap);
     }
 
     public enum WrapMode {

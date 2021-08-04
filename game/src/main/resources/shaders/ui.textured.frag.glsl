@@ -18,4 +18,7 @@ vec2 moduv(vec2 in_) {
 
 void main() {
     colorOut = texture(uTexture, fUV);
+    if (colorOut.a == 0) {
+        discard;
+    }
 }

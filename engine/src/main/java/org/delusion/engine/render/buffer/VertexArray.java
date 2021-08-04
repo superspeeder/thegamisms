@@ -74,4 +74,16 @@ public class VertexArray {
         return this;
 
     }
+
+    public void rebindVBO(VertexBuffer vbo, int binding, int vsize) {
+        glVertexArrayVertexBuffer(handle, binding, vbo.getHandle(), 0, vsize * Float.BYTES);
+    }
+
+    public int getHandle() {
+        return handle;
+    }
+
+    public void dispose() {
+        glDeleteVertexArrays(handle);
+    }
 }
