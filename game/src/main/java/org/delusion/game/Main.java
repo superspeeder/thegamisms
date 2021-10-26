@@ -1,6 +1,7 @@
 package org.delusion.game;
 
 import org.delusion.engine.App;
+import org.delusion.engine.assets.AssetLibrary;
 import org.delusion.engine.camera.Camera;
 import org.delusion.engine.camera.OrthoCamera;
 import org.delusion.engine.render.Color;
@@ -17,6 +18,7 @@ import org.delusion.engine.window.input.InputHandler;
 import org.delusion.game.inventory.*;
 import org.delusion.game.tiles.TileType;
 import org.delusion.engine.render.PackedTextureManager;
+import org.delusion.game.world.tilemap.Chunk;
 import org.delusion.game.world.tilemap.ChunkManager;
 import org.delusion.engine.utils.Utils;
 import org.delusion.engine.window.Window;
@@ -59,6 +61,18 @@ To-Do List
 
 
 public class Main extends App {
+
+    private AssetLibrary assetLibrary;
+
+    public static Main getCurrent() {
+        App a = App.getCurrent();
+        if (a instanceof Main) {
+            return (Main)a;
+        } else {
+            throw new IllegalStateException("Currently running app is not an instance of " + Main.class.getName());
+        }
+    }
+
     private Renderer renderer;
     private Camera camera;
     private ShaderProgram program, playerProgram;
@@ -75,7 +89,6 @@ public class Main extends App {
     private Group rootUI;
     private ShaderProgram uiTexturedProgram;
     private PackedTextureManager textureManager = new PackedTextureManager();
-    private Hotbar hotbar;
     private Items items;
     private Font font;
 
@@ -94,15 +107,35 @@ public class Main extends App {
 
     @Override
     public void create() {
+        // Load Assets
+        assetLibrary = new AssetLibrary();
+
         TileType.init();
 
         renderer = new Renderer(this);
         renderer.setPackedTextureManager(textureManager);
 
+        try {
+            font = new Font("/fonts/Orbitron-ExtraBold.ttf", 24);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Stack.setFont(font);
         Item.setRenderer(renderer);
 
         program = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/tile.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/tile.frag.glsl"));
         playerProgram = new ShaderProgram(new Shader(Shader.Type.Vertex,"/shaders/player.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/player.frag.glsl"));
+        uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
+        textProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.text.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.text.frag.glsl"));
+        uiTexturedProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.textured.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.textured.frag.glsl"));
+
+        assetLibrary.putShader("tile", program);
+        assetLibrary.putShader("player", program);
+        assetLibrary.putShader("ui.basic", uiProgram);
+        assetLibrary.putShader("ui.textured", uiTexturedProgram);
+        assetLibrary.putShader("ui.text", textProgram);
+
 
         Texture2D.TexParams texParams = new Texture2D.TexParams()
                 .setWrap(Texture2D.WrapMode.ClampToEdge, Texture2D.WrapMode.ClampToEdge)
@@ -125,41 +158,20 @@ public class Main extends App {
 
         overlay = new QuadSprite();
 
-        uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
-        textProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.text.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.text.frag.glsl"));
-        uiTexturedProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.textured.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.textured.frag.glsl"));
-
-        try {
-            font = new Font("/fonts/Orbitron-ExtraBold.ttf", 24);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         rq = new RenderQueue();
         rootUI = new Group();
-        Stack.setFont(font);
 
-//        Text text = new Text("Hello World!", font, new Vector2f(0, -50), textProgram);
-//        rq.queue(text);
-
-        hotbar = new Hotbar(uiTexturedProgram, textProgram, textureManager);
         rootUI.addAll(
-            hotbar
+            player.getHUD()
         );
 
-        hotbar.getSlot(0).setContents(new Stack(items.WOOD_PLANKS, 1));
-        hotbar.getSlot(1).setContents(new Stack(items.GEM1, 4));
-        hotbar.getSlot(2).setContents(new Stack(items.WOOD_LOGS, 43));
-        hotbar.getSlot(3).setContents(new Stack(items.WOOD_STICKS, 100));
+        player.getHotbar().getSlot(0).setContents(new Stack(items.WOOD_PLANKS, 1));
+        player.getHotbar().getSlot(1).setContents(new Stack(items.GEM1, 4));
+        player.getHotbar().getSlot(2).setContents(new Stack(items.WOOD_LOGS, 43));
+        player.getHotbar().getSlot(3).setContents(new Stack(items.WOOD_STICKS, 100));
 
-
-//        getWindow().hideCursor();
         setInputHandler(new InputManager(this, renderer));
         rootUI.draw(rq, batch);
-
-
-
-
     }
 
     double aaaa = 0;
@@ -241,5 +253,13 @@ public class Main extends App {
         Vector2f vector2f = new Vector2f(homo.x * 960, homo.y * 540);
         System.out.println(vector2f.x + ", " + vector2f.y + " " + screen.x + ", " + screen.y + " " + homo.x + ", " + homo.y);
         return vector2f;
+    }
+
+    public AssetLibrary getAssetLibrary() {
+        return assetLibrary;
+    }
+
+    public PackedTextureManager getTexManager() {
+        return textureManager;
     }
 }

@@ -8,6 +8,7 @@ import org.delusion.engine.render.ui.Node;
 import org.delusion.engine.render.ui.Rect;
 import org.delusion.engine.render.PackedTextureManager;
 import org.delusion.engine.render.ui.TexturedRect;
+import org.delusion.game.utils.DirtyableVar;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
@@ -20,8 +21,8 @@ public class Slot extends TexturedRect {
     };
 
     private PackedTextureManager texman;
-    private Type type;
-    private Type origintype;
+    protected DirtyableVar<Type> type;
+    protected final Type origintype;
     private Stack contents;
     private Stack.Renderable renderableStack;
 
@@ -39,7 +40,7 @@ public class Slot extends TexturedRect {
     public Slot(Vector2f pos, Vector2f size, ShaderProgram sh,  ShaderProgram textSh, PackedTextureManager packedTextureManager, Type type) {
         super(pos, size, true, packedTextureManager.getTileset("slot").getTexture(), packedTextureManager.getTextureUVs("slot", type.name().toLowerCase()), sh);
         texman = packedTextureManager;
-        this.type = type;
+        this.type = DirtyableVar.create(type, t -> setUVs(texman.getTextureUVs("slot", t.name().toLowerCase())));
         origintype = type;
         contents = null;
         renderableStack = new Stack.Renderable(pos, new Vector2f(size).mul(0.75f), sh, textSh);
@@ -125,19 +126,20 @@ public class Slot extends TexturedRect {
         renderableStack.update(contents);
     }
 
-    public void select() {
-        type = Type.Selected;
-        setUVs(texman.getTextureUVs("slot", type.name().toLowerCase()));
-    }
-
-    public void deselect() {
-        type = origintype;
-        setUVs(texman.getTextureUVs("slot", type.name().toLowerCase()));
-    }
+//    public void select() {
+//        type = Type.Selected;
+//        setUVs(texman.getTextureUVs("slot", type.name().toLowerCase()));
+//    }
+//
+//    public void deselect() {
+//        type = origintype;
+//        setUVs(texman.getTextureUVs("slot", type.name().toLowerCase()));
+//    }
 
     public Type getType() {
-        return type;
+        return type.get();
     }
+
 
     protected Vector4f getCurrentUVs() {
         return uvs;
@@ -147,13 +149,13 @@ public class Slot extends TexturedRect {
     public void onClick(Vector2f pos, int button, int mods) {
         super.onClick(pos, button, mods);
         System.out.println("OnClick");
-        if (getParent() instanceof Hotbar) {
-            Hotbar h = (Hotbar) getParent();
-            if (h.isModifiable()) {
-//                onClicked(h.getCursor().getStack());
-            } else {
-                h.setSelectedSlot(this);
-            }
-        }
+//        if (getParent() instanceof Hotbar) {
+//            Hotbar h = (Hotbar) getParent();
+//            if (h.isModifiable()) {
+////                onClicked(h.getCursor().getStack());
+//            } else {
+//                h.setSelectedSlot(this);
+//            }
+//        }
     }
 }

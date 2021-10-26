@@ -1,8 +1,12 @@
 package org.delusion.game;
 
+import org.delusion.engine.assets.AssetLibrary;
 import org.delusion.engine.math.AABB;
 import org.delusion.engine.math.Rect2i;
+import org.delusion.engine.render.ui.Group;
+import org.delusion.engine.render.ui.Node;
 import org.delusion.engine.sprite.QuadSprite;
+import org.delusion.game.inventory.Hotbar;
 import org.delusion.game.tiles.SimpleProperty;
 import org.delusion.game.tiles.TileData;
 import org.delusion.game.utils.Direction;
@@ -24,13 +28,14 @@ public class PlayerSprite extends QuadSprite {
     private static final float MOVE_MOD = 50.0f;
     private static final float MAX_VEL_X = 16.0f;
     private static final float MAX_VEL_Y = 1500.0f;
-    private static final float MIN_DOWN_VEL_PLATFORM_FALL = -60.0f;
+    private Hotbar hotbar;
     private World world;
 
     private Vector2f velocity, acceleration;
     private boolean onGround = false;
     private boolean crouching = false;
     private Set<TileData> tilesOnTopOf = new HashSet<>();
+    private Group hud = new Group();
 
 
     public PlayerSprite(Vector2f position, World world) {
@@ -38,6 +43,8 @@ public class PlayerSprite extends QuadSprite {
         this.world = world;
         velocity = new Vector2f();
         acceleration = new Vector2f();
+        hotbar = new Hotbar();
+        hud.add(hotbar);
     }
 
     public void onKeyPress(Key key) {
@@ -45,34 +52,13 @@ public class PlayerSprite extends QuadSprite {
             case Left, A -> acceleration.x -= MOVE_ACCEL_X;
             case Right, D -> acceleration.x += MOVE_ACCEL_X;
             case Up, W, Space -> {
-
-                boolean continue_ = true;
-                System.out.println("Jump?");
-                if (crouching) {
-                    System.out.println("Crouch Jump??");
-                    continue_ = onCrouchJump();
-                }
-
-                if (onGround && velocity.y < JUMP_STRENGTH && continue_)
+                if (onGround && velocity.y < JUMP_STRENGTH)
                     velocity.y += JUMP_STRENGTH;
             }
             case Down, S -> crouching = true;
         }
     }
 
-    private boolean onCrouchJump() {
-        if (onGround) {
-            System.out.println("Crouch Jump?");
-            if (tilesOnTopOf.stream().allMatch(td -> {
-                System.out.println(td); return td.ty.hasSimpleProperty(SimpleProperty.Platform);
-            })) {
-                System.out.println("Crouch Jump");
-                velocity.y = MIN_DOWN_VEL_PLATFORM_FALL;
-                return false;
-            }
-        }
-        return true;
-    }
 
     public void onKeyRelease(Key key) {
         switch (key) {
@@ -177,24 +163,20 @@ public class PlayerSprite extends QuadSprite {
 
         if (velocity.y > 0) {
             // Moving up
-
             for (TileData td : collisionTiles) {
-//                if (pos.y <= position.y + scale.y && pos.y + Chunk.PIXELS_PER_TILE > position.y) {
                 if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Up)) {
                     position.y = td.pos.y - scale.y;
                     velocity.y = 0;
                 }
             }
-
         } else {
             // Moving Down
             for (TileData td : collisionTiles) {
-//                if (pos.y + Chunk.PIXELS_PER_TILE >= position.y && pos.y < position.y + scale.y) {
                 if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Down)) {
-                    if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && velocity.y < MIN_DOWN_VEL_PLATFORM_FALL && crouching) {
+                    if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && crouching) {
                         continue;
                     }
-                    else if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && position.y + 5 < td.pos.y + Chunk.PIXELS_PER_TILE) {
+                    else if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && position.y + 4 < td.pos.y + Chunk.PIXELS_PER_TILE) {
                         continue;
                     }
                     position.y = td.pos.y + Chunk.PIXELS_PER_TILE;
@@ -203,5 +185,13 @@ public class PlayerSprite extends QuadSprite {
                 }
             }
         }
+    }
+
+    public Group getHUD() {
+        return hud;
+    }
+
+    public Hotbar getHotbar() {
+        return hotbar;
     }
 }

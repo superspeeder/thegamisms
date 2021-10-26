@@ -20,17 +20,13 @@ public class InputManager implements InputHandler {
 
     @Override
     public void onKeyPressed(Key key, int mods, int scancode) {
-        if (key == Key.Escape) {
-            app.closeWindow();
-        }
-        if (key == Key.R) {
-            renderer.setBackgroundColor(Color.RED);
-        }
-        if (key == Key.G) {
-            renderer.setBackgroundColor(Color.GREEN);
-        }
-        if (key == Key.B) {
-            renderer.setBackgroundColor(Color.BLUE);
+//        if (key == Key.Escape) {
+//            app.closeWindow();
+//        }
+
+        switch (key) {
+            case Escape -> app.closeWindow();
+            case K1 -> app.getPlayer().getHotbar().select(0);
         }
 
         app.getPlayer().onKeyPress(key);

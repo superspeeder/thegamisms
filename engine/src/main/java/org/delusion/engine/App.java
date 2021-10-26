@@ -19,9 +19,16 @@ import org.lwjgl.vulkan.VkApplicationInfo;
 
 public abstract class App {
 
+    private static App RUNNING;
+
     private final Window window;
 
+    public static App getCurrent() {
+        return RUNNING;
+    }
+
     public App(Settings settings) {
+        RUNNING = this;
         Window.init();
         if (settings.width == -1) {
             settings.width = Monitor.getMonitorOrPrimary(settings.defaultMonitor).getVideoMode().getWidth();
