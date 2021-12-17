@@ -25,6 +25,7 @@ public class Batch {
     private int quadsBatched, verticesBatched;
 
     public Batch(int quadmax) { // 5 * 4 * 4
+        System.out.println(VERTEX_SIZE * VERTICES_PER_QUAD * quadmax * Float.BYTES);
         vbo = new VertexBuffer(VERTEX_SIZE * VERTICES_PER_QUAD * quadmax);
         vao = new VertexArray().bindVertexBuffer(vbo, 3, 2).elementBuffer(ebo);
         quadsBatched = 0;
@@ -43,10 +44,12 @@ public class Batch {
             eboD[i * INDICES_PER_QUAD + 5] = i * VERTICES_PER_QUAD + 1;
         }
         ebo =  new ElementBuffer(eboD);
-        System.out.println("Created EBO with " + eboD.length + " indices (" + ((float)(eboD.length * Integer.BYTES) / 1e6) + " mb)");
+//        System.out.println("Created EBO with " + eboD.length + " indices (" + ((float)(eboD.length * Integer.BYTES) / 1e6) + " mb)");
     }
 
     public Batch() {
+
+        System.out.println(MAX_VBO_SIZE / Float.BYTES);
         vbo = new VertexBuffer(MAX_VBO_SIZE / Float.BYTES);
         vao = new VertexArray().bindVertexBuffer(vbo, 3, 2).elementBuffer(ebo);
         quadsBatched = 0;
@@ -70,7 +73,8 @@ public class Batch {
 
     public Batch batch(Vector2f position, Vector2f size, Vector4f uvs) {
         if (quadsBatched >= MAX_QUADS) {
-            System.out.println("Fuck"); return this; }
+//            System.out.println("Fuck");
+            return this; }
         addVertices(
                 position.x,position.y,0.0f, uvs.x, uvs.y,
                 position.x + size.x, position.y, 0.0f, uvs.z, uvs.y,

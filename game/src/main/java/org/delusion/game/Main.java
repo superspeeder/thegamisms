@@ -26,10 +26,9 @@ import org.delusion.game.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /*
 To-Do List
@@ -63,6 +62,7 @@ To-Do List
 public class Main extends App {
 
     private AssetLibrary assetLibrary;
+    private ShaderProgram uiTexturedUVProgram;
 
     public static Main getCurrent() {
         App a = App.getCurrent();
@@ -129,12 +129,14 @@ public class Main extends App {
         uiProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.frag.glsl"));
         textProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.text.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.text.frag.glsl"));
         uiTexturedProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.textured.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.textured.frag.glsl"));
+        uiTexturedUVProgram = new ShaderProgram(new Shader(Shader.Type.Vertex, "/shaders/ui.textured.vert.glsl"), new Shader(Shader.Type.Fragment, "/shaders/ui.textured_uv.frag.glsl"));
 
         assetLibrary.putShader("tile", program);
         assetLibrary.putShader("player", program);
         assetLibrary.putShader("ui.basic", uiProgram);
         assetLibrary.putShader("ui.textured", uiTexturedProgram);
         assetLibrary.putShader("ui.text", textProgram);
+        assetLibrary.putShader("ui.textured_uv", uiTexturedUVProgram);
 
 
         Texture2D.TexParams texParams = new Texture2D.TexParams()
@@ -148,6 +150,7 @@ public class Main extends App {
         items = new Items(renderer);
 
         ts = new Tileset(tex, new Vector2f(16, 16));
+        textureManager.addTileset("tile", ts);
         chunkManager = new ChunkManager(ts);
 
         world = new World(chunkManager);
@@ -169,9 +172,11 @@ public class Main extends App {
         player.getHotbar().getSlot(1).setContents(new Stack(items.GEM1, 4));
         player.getHotbar().getSlot(2).setContents(new Stack(items.WOOD_LOGS, 43));
         player.getHotbar().getSlot(3).setContents(new Stack(items.WOOD_STICKS, 100));
+        player.getHotbar().getSlot(5).setContents(new Stack(items.GEM1, 22));
 
         setInputHandler(new InputManager(this, renderer));
         rootUI.draw(rq, batch);
+        rq.queue(player.getCursorSprite());
     }
 
     double aaaa = 0;
@@ -212,7 +217,17 @@ public class Main extends App {
         player.draw(renderer);
 
         renderer.setViewProjection(camera.getProjection());
+
         rq.draw(renderer);
+
+        if (rootUI.isDirty()) {
+            rq.reset();
+            rootUI.draw(rq, batch);
+            rq.queue(player.getCursorSprite());
+        }
+
+        if (!cleanupBtchs.isEmpty())
+            cleanupBtchs.pop().dispose();
 
     }
 
@@ -223,7 +238,7 @@ public class Main extends App {
 
     public static void main(String[] args) {
         new Main(new Settings(new Window.Settings()
-                .setResizable(true).setMaximized(true).setOpenglDebugContext(false))
+                .setResizable(true).setMaximized(true).setOpenglDebugContext(true))
                 .setWindowTitle("The Game!")
 //                .enableFullscreen(0)
         ).run();
@@ -241,7 +256,7 @@ public class Main extends App {
         int[] viewport = getWindow().getViewport();
         Vector3f vec = new Vector3f();
         new Matrix4f(camera.getCombined()).unproject(new Vector3f(screen, 0.0f), viewport, vec);
-        System.out.println(vec);
+//        System.out.println(vec);
         return new Vector2f(vec.x,vec.y);
     }
 
@@ -251,7 +266,7 @@ public class Main extends App {
         homo.x -= 1.0f;
         homo.y = (2 - homo.y) - 1.0f;
         Vector2f vector2f = new Vector2f(homo.x * 960, homo.y * 540);
-        System.out.println(vector2f.x + ", " + vector2f.y + " " + screen.x + ", " + screen.y + " " + homo.x + ", " + homo.y);
+//        System.out.println(vector2f.x + ", " + vector2f.y + " " + screen.x + ", " + screen.y + " " + homo.x + ", " + homo.y);
         return vector2f;
     }
 
@@ -261,5 +276,11 @@ public class Main extends App {
 
     public PackedTextureManager getTexManager() {
         return textureManager;
+    }
+
+    ConcurrentLinkedDeque<Batch> cleanupBtchs = new ConcurrentLinkedDeque<>();
+
+    public void addToCleanupBatches(Batch batch) {
+        cleanupBtchs.add(batch);
     }
 }

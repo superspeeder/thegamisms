@@ -34,7 +34,7 @@ application {
 
 dependencies {
     implementation project(':engine')
-
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.0.4'
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
     implementation "org.lwjgl:lwjgl"

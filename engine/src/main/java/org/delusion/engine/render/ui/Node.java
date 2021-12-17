@@ -8,11 +8,14 @@ public abstract class Node {
 
     private Node parent;
     protected boolean dirty;
+    private boolean enabled = true;
 
     public Node() {
     }
 
     public void markDirty() {
+        if (parent != null)
+            parent.markDirty();
         dirty = true;
     }
 
@@ -26,10 +29,23 @@ public abstract class Node {
     }
 
     public boolean pointWithin(Vector2f pos) {
-        return true;
+        return isEnabled();
     }
 
     public Node getParent() {
         return parent;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean val) {
+        if (val != enabled) markDirty();
+        enabled = val;
+    }
+
+    public boolean isDirty() {
+        return dirty;
     }
 }

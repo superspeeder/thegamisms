@@ -29,7 +29,7 @@ public class Hotbar extends Group {
     }
 
     private void onSelect(SelectableSlot slot) {
-        if (selectedSlot != null) {
+        if (selectedSlot != null && selectedSlot != slot) {
             selectedSlot.deselect();
         }
         selectedSlot = slot;
@@ -41,6 +41,7 @@ public class Hotbar extends Group {
     }
 
     public void setSelectedSlot(int i) {
+        if (currentSelection == i) return;
         slots[i].select();
     }
 
@@ -49,7 +50,7 @@ public class Hotbar extends Group {
     }
 
     public boolean isModifiable() {
-        return false;
+        return Main.getCurrent().getPlayer().isInventoryOpen();
     }
 
     public void setSelectedSlot(SelectableSlot slot) {

@@ -1,44 +1,91 @@
 package org.delusion.engine.render.framebuffer;
 
+import org.delusion.engine.math.Rect2i;
 import org.delusion.engine.render.texture.Texture2D;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL46.*;
 
 public class Framebuffer {
+    private static int boundDraw = 0;
+    private static int boundRead = 0;
+
     private int handle;
+
+    private boolean status = false;
+
+    private Map<Attachment, IFramebufferAttachable> attachments = new HashMap<>();
+
+    public static Framebuffer DEFAULT = new Framebuffer(0); // default fbo
+
+    private Framebuffer(int i) {
+        handle = i;
+        if (isDefault()) status = true;
+        else checkStatus();
+    }
+
+    public boolean isDefault() {
+        return handle == 0;
+    }
+
 
     public Framebuffer() {
         handle = glCreateFramebuffers();
     }
 
     public Framebuffer attachTexture(Texture2D tex, Attachment attachment) {
+        attachments.put(attachment, tex);
         glNamedFramebufferTexture(handle, attachment.getVal(),tex.getHandle(), 0);
         return this;
     }
 
+    public Framebuffer attachRenderbuffer(Renderbuffer rb, Attachment attachment) {
+        attachments.put(attachment, rb);
+        glNamedFramebufferRenderbuffer(handle, attachment.getVal(), GL_RENDERBUFFER, rb.getHandle());
+        return this;
+    }
+
+    public IFramebufferAttachable getAttachment(Attachment atc) {
+        return attachments.get(atc);
+    }
+
     public void bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, handle);
+        if (boundDraw != handle || boundRead != handle)
+            glBindFramebuffer(GL_FRAMEBUFFER, handle);
+        boundDraw = handle;
+        boundRead = handle;
     }
 
     public void bindDraw() {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, handle);
+        if (boundDraw != handle)
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, handle);
+        boundDraw = handle;
     }
 
     public void bindRead() {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, handle);
+        if (boundRead != handle)
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, handle);
+        boundRead = handle;
     }
 
-    public static void bindDefault() {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    public boolean checkStatus() {
+        if (!status)
+            status = glCheckNamedFramebufferStatus(handle, GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+        return status;
     }
 
-    public static void bindDefaultDraw() {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    public void blit(Framebuffer target, Rect2i src, Rect2i dst, int filter) {
+        glBlitNamedFramebuffer(handle, target.handle, src.getX(), src.getY(), src.getX2(), src.getY2(), dst.getX(), dst.getY(), dst.getX2(), dst.getY2(),
+                GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, filter);
     }
 
-    public static void bindDefaultRead() {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    public void blit(Framebuffer target, Rect2i src, Rect2i dst, int filter, int mask) {
+        glBlitNamedFramebuffer(handle, target.handle, src.getX(), src.getY(), src.getX2(), src.getY2(), dst.getX(), dst.getY(), dst.getX2(), dst.getY2(),
+                mask, filter);
     }
+
 
     public enum Attachment {
         Color0(GL_COLOR_ATTACHMENT0),

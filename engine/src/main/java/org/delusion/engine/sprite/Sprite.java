@@ -12,6 +12,16 @@ public class Sprite {
 
     protected Matrix4f model;
     protected boolean dirty = true;
+    private Renderer.PrimitiveType mode = Renderer.PrimitiveType.Triangles;
+
+    public Renderer.PrimitiveType getMode() {
+        return mode;
+    }
+
+    public Sprite setMode(Renderer.PrimitiveType mode) {
+        this.mode = mode;
+        return this;
+    }
 
     public Sprite(Mesh mesh) {
         this.mesh = mesh;
@@ -89,7 +99,7 @@ public class Sprite {
     }
 
     public void draw(Renderer renderer) {
-        renderer.drawElements(Renderer.PrimitiveType.Triangles, mesh.getVAO(), mesh.getIndexCount());
+        renderer.drawElements(mode, mesh.getVAO(), mesh.getIndexCount());
     }
 
     public void setPosition(float x, float y) {

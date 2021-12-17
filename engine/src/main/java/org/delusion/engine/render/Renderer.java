@@ -2,6 +2,7 @@ package org.delusion.engine.render;
 
 import org.delusion.engine.App;
 import org.delusion.engine.render.buffer.VertexArray;
+import org.delusion.engine.render.framebuffer.Framebuffer;
 import org.delusion.engine.render.shader.ShaderProgram;
 import org.delusion.engine.render.texture.Texture2D;
 import org.joml.Matrix4f;
@@ -16,7 +17,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public class Renderer {
 
     private Matrix4f model = new Matrix4f().identity();
-    private Color foregroundColor;
+    private Color foregroundColor = Color.WHITE;
     private App app;
     private Color backgroundColor;
     private ShaderProgram currentProgram;
@@ -24,6 +25,9 @@ public class Renderer {
     private Map<Integer, Texture2D> texs = new HashMap<>();
     private Vector4f uvs;
     private PackedTextureManager packedTextureManager;
+    private Framebuffer currentDrawFramebuffer = Framebuffer.DEFAULT;
+    private Framebuffer currentReadFramebuffer = Framebuffer.DEFAULT;
+    private Color tint = Color.WHITE;
 
     public void useShader(ShaderProgram prog) {
         currentProgram = prog;
@@ -65,6 +69,23 @@ public class Renderer {
 
     public void setPackedTextureManager(PackedTextureManager packedTextureManager) {
         this.packedTextureManager = packedTextureManager;
+    }
+
+    public void setFramebuffer(Framebuffer fbo) {
+        currentDrawFramebuffer = fbo;
+        currentReadFramebuffer = fbo;
+    }
+
+    public void setDrawFramebuffer(Framebuffer fbo) {
+        currentDrawFramebuffer = fbo;
+    }
+
+    public void setReadFramebuffer(Framebuffer fbo) {
+        currentReadFramebuffer = fbo;
+    }
+
+    public void setTint(Color tint) {
+        this.tint = tint;
     }
 
     public enum PrimitiveType {
@@ -131,7 +152,17 @@ public class Renderer {
     }
 
     private void preRender() {
-        currentProgram.uniformColor("uColor", foregroundColor);
+        if (currentReadFramebuffer == currentDrawFramebuffer) {
+            currentReadFramebuffer.bind();
+        } else {
+            currentReadFramebuffer.bindRead();
+            currentDrawFramebuffer.bindDraw();
+        }
+
+        if (currentProgram.hasUniform("uColor"))
+            currentProgram.uniformColor("uColor", foregroundColor);
+        if (currentProgram.hasUniform("uTint"))
+            currentProgram.uniformColor("uTint", tint);
         currentProgram.uniformMat4("uModel", model);
         currentProgram.uniformMat4("uViewProjection", viewProjection);
         texs.forEach((i, tx) -> {

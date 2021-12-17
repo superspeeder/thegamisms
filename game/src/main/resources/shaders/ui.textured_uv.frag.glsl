@@ -14,12 +14,13 @@ uniform vec4 uTint;
 uniform vec4 uColor;
 
 vec2 moduv(vec2 in_) {
-    return vec2((uUV.z - uUV.x) * in_.x, (uUV.w - uUV.y) * in_.y);
+    return vec2(uUV.x + in_.x * (uUV.z - uUV.x), uUV.y + in_.y * (uUV.w - uUV.y));
 //    return in_;
 }
 
 void main() {
-    colorOut = texture(uTexture, fUV) * uTint;
+    colorOut = texture(uTexture, moduv(fUV)) * uTint;
+    colorOut.r = 1.0f;
 //    colorOut = vec4(1.0,1.0,1.0,1.0) * uTint;
     if (colorOut.a == 0) {
         discard;

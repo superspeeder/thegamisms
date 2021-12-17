@@ -1,24 +1,36 @@
 package org.delusion.game.world.tilemap;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.delusion.engine.render.Renderer;
 import org.delusion.engine.render.texture.Tileset;
-import org.delusion.engine.utils.Utils;
 import org.delusion.game.tiles.TileType;
 import org.delusion.game.world.World;
-import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
-import org.joml.Vector4f;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 public class ChunkManager {
     private static final int MAX_DIST = 2;
-    private ConcurrentHashMap<ChunkPos, Chunk> chunks = new ConcurrentHashMap<>();
-//    private ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    private static final int MAX_LOAD_DIST = 3;
+    private static final int MAX_CHUNKS = 200;
+    private final AsyncLoadingCache<ChunkPos, Chunk> chunks = Caffeine.newBuilder()
+            .maximumSize(MAX_CHUNKS)
+            .removalListener((key, value, cause) -> {
+                if (value == null) return;
+                Chunk c = (Chunk)value;
+                c.save();
+            })
+            .buildAsync(this::generateChunk);
+    private ChunkPos curCenterChunk = new ChunkPos(0, 0);
+
+    private Chunk generateChunk(ChunkPos key) {
+        return new Chunk(key, world);
+    }
+
+
     private Tileset tileset;
     private ChunkPos oldCenterChunk;
     private World world;
@@ -28,50 +40,19 @@ public class ChunkManager {
     }
 
     public void update(ChunkPos centerChunk) {
-        if (!centerChunk.equals(oldCenterChunk)) {
-            oldCenterChunk = centerChunk;
-            System.out.println("Crossed into new chunk: " + centerChunk);
-            ConcurrentLinkedQueue<Chunk> cs = new ConcurrentLinkedQueue<>();
-            new Thread(() -> {
-                // Validate chunks
-                List<ChunkPos> invalidCs = chunks.keySet().parallelStream().filter(pos -> Utils.mrdist(centerChunk.vec(), pos.vec()) > MAX_DIST).collect(Collectors.toList());
-                for (ChunkPos v : invalidCs) {
-                    chunks.get(v).save();
-                    cs.add(chunks.get(v));
-                    chunks.remove(v);
-                }
+        curCenterChunk = centerChunk;
 
-                for (int x = -MAX_DIST; x < MAX_DIST; x++) {
-                    for (int y = -MAX_DIST; y < MAX_DIST; y++) {
-                        if (!chunks.containsKey(new ChunkPos(x + centerChunk.x, y + centerChunk.y))) {
-                            new Thread(this.chunkGenerator(x + centerChunk.x, y + centerChunk.y)).start();
-                            System.out.printf("Started Generation of chunk (%d, %d)\n", x + centerChunk.x, y + centerChunk.y);
-                        }
-                    }
-                }
-
-            }).start();
-            for (Chunk c : cs) {
-                c.dispose();
-            }
-        }
-    }
-
-    private Runnable chunkGenerator(final int x, final int y) {
-        Chunk c = new Chunk(new ChunkPos(x,y));
-        chunks.put(c.getPos(), c);
-        return () -> this.genChunk(c, x,y);
-    }
-
-    private void genChunk(Chunk c, int xx, int yy) {
-        c.compute((x,y) -> world.computeTile(x,y,xx,yy));
-        System.out.printf("Finished generation of chunk (%d, %d)\n",xx,yy);
+        chunks.getAll(getLoadChunkRange());
     }
 
     public void draw(Renderer renderer) {
-        for (Map.Entry<ChunkPos, Chunk> entry : chunks.entrySet()) {
-            entry.getValue().draw(renderer, tileset);
+        for (ChunkPos cp : getVisibleChunkRange()) {
+            getChunkOptional(cp, true).ifPresent(chunk -> chunk.draw(renderer));
         }
+    }
+
+    private ChunkPos.Range getVisibleChunkRange() {
+        return new ChunkPos.Range(curCenterChunk.x - MAX_DIST, curCenterChunk.y - MAX_DIST, curCenterChunk.x + MAX_DIST + 1, curCenterChunk.y + MAX_DIST + 1);
     }
 
     public static ChunkPos chunkPosFromPixel(Vector2f pixel) {
@@ -95,11 +76,7 @@ public class ChunkManager {
 
     public TileType getTile(int x, int y) {
         ChunkPos chunk = chunkPosFromTile(new Vector2f(x,y));
-        if (!chunks.containsKey(chunk)) return TileType.Air;
         Vector2i rel = relative(new Vector2f(x,y));
-
-//        if (x == -1)
-//            System.out.println("(" + x + ", " + y + ") => Chunk: " + chunk + ", Rel: (" + rel.x + ", " + rel.y + ")");
         TileType tt = getChunk(chunk).get(rel);
         if (tt == null) {
             return TileType.Air;
@@ -107,9 +84,36 @@ public class ChunkManager {
         return tt;
     }
 
-    private Chunk getChunk(ChunkPos chunk) {
-        return chunks.get(chunk);
+    public Chunk getChunk(ChunkPos chunk) {
+        try {
+            return chunks.get(chunk).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+    public Optional<Chunk> getChunkOptional(ChunkPos chunk) {
+        return getChunkOptional(chunk, false);
+    }
+
+    public Optional<Chunk> getChunkOptional(ChunkPos chunk, boolean gen) {
+        if (gen) {
+            CompletableFuture<Chunk> cf = chunks.get(chunk);
+            return Optional.ofNullable(cf.getNow(null));
+        }
+        CompletableFuture<Chunk> cf = chunks.getIfPresent(chunk);
+        if (cf != null) {
+            return Optional.ofNullable(cf.getNow(null));
+        }
+        return Optional.empty();
+    }
+
+
+
+    public boolean isChunkVisible(ChunkPos c) {
+        return getVisibleChunkRange().contains(c);
+    }
+
 
     public void setWorld(World world) {
         this.world = world;
@@ -159,5 +163,61 @@ public class ChunkManager {
         public Vector2i vec() {
             return new Vector2i(x,y);
         }
+
+        public static class Range implements Iterator<ChunkPos>, Iterable<ChunkPos> {
+            private int ci = 0;
+            private final int x1;
+            private final int x2;
+            private final int y1;
+            private final int y2;
+            private final int w;
+            private final int h;
+            private final int end;
+
+            public Range(int x1, int y1, int x2, int y2) {
+                this.x1 = x1;
+                this.y1 = y1;
+                this.x2 = x2;
+                this.y2 = y2;
+
+                w = x2 - x1;
+                h = y2 - y1;
+                end = w * h - 1;
+            }
+
+            private ChunkPos fromIndex(int i) {
+                int row = Math.floorDiv(i, w) + x1;
+                int col = Math.floorMod(i, w) + y1;
+                return new ChunkPos(row, col);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return ci <= end;
+            }
+
+            @Override
+            public ChunkPos next() {
+                return fromIndex(ci++);
+            }
+
+            public boolean contains(ChunkPos other) {
+                return contains(other.x, other.y);
+            }
+
+            public boolean contains(int x, int y) {
+                return x1 <= x && x <= x2 && y1 <= y && y <= y2;
+            }
+
+            @Override
+            public Iterator<ChunkPos> iterator() {
+                return this;
+            }
+        }
+    }
+
+
+    private ChunkPos.Range getLoadChunkRange() {
+        return new ChunkPos.Range(curCenterChunk.x - MAX_LOAD_DIST, curCenterChunk.y - MAX_LOAD_DIST, curCenterChunk.x + MAX_LOAD_DIST + 1, curCenterChunk.y + MAX_LOAD_DIST + 1);
     }
 }

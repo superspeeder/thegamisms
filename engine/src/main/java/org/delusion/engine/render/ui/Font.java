@@ -56,7 +56,7 @@ public class Font {
                 ));
             }
         }
-        System.out.println(verts.size());
+//        System.out.println(verts.size());
         return verts;
     }
 }

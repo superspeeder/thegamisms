@@ -18,6 +18,14 @@ public class Stack {
         Stack.font = font;
     }
 
+    @Override
+    public String toString() {
+        return "Stack{" +
+                "count=" + count +
+                ", item=" + item +
+                '}';
+    }
+
     public static class Renderable extends TexturedRect {
 
         private Stack stack;
@@ -46,7 +54,6 @@ public class Stack {
                 tex = stack.getItem().getTexture();
                 setUVs(stack.getItem().getTexUVs());
                 text.setText(Integer.toString(stack.getCount()));
-                System.out.println("Text Updated");
             }
         }
 
@@ -77,5 +84,6 @@ public class Stack {
 
     public void setCount(int count) {
         this.count = count;
+
     }
 }

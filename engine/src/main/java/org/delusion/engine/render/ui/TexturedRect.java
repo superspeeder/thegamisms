@@ -1,6 +1,7 @@
 package org.delusion.engine.render.ui;
 
 import org.delusion.engine.math.AABB;
+import org.delusion.engine.render.Color;
 import org.delusion.engine.render.RenderQueue;
 import org.delusion.engine.render.Renderer;
 import org.delusion.engine.render.buffer.ElementBuffer;
@@ -34,11 +35,22 @@ public class TexturedRect extends Group implements Shape {
     protected boolean fill;
     protected ShaderProgram sh;
 
+    protected Color tint = Color.WHITE;
+
     public static void init() {
         ebo = new ElementBuffer(List.of(0,1,2,3));
     }
 
     private AABB aabb;
+
+    public Color getTint() {
+        return tint;
+    }
+
+    public TexturedRect setTint(Color tint) {
+        this.tint = tint;
+        return this;
+    }
 
     @Override
     public void render(Renderer renderer) {
@@ -46,6 +58,7 @@ public class TexturedRect extends Group implements Shape {
         renderer.useShader(sh);
         renderer.setTex(tex, 0);
         renderer.setUVs(uvs);
+        renderer.setTint(tint);
         if (fill) {
             renderer.drawElements(Renderer.PrimitiveType.TriangleFan, vao, 4);
         } else {
@@ -54,6 +67,10 @@ public class TexturedRect extends Group implements Shape {
     }
 
     public TexturedRect(Vector2f pos, Vector2f size, boolean fill,  Texture2D tex, Vector4f uvs, ShaderProgram sh) {
+        this(pos, size, fill, tex, uvs, Color.WHITE, sh);
+    }
+
+    public TexturedRect(Vector2f pos, Vector2f size, boolean fill,  Texture2D tex, Vector4f uvs, Color tint, ShaderProgram sh) {
         this.pos = pos;
         this.size = size;
         this.fill = fill;
@@ -90,12 +107,13 @@ public class TexturedRect extends Group implements Shape {
 
     @Override
     public boolean pointWithin(Vector2f pos) {
+        if (!super.pointWithin(pos)) return false;
         if (aabb.containsPoint(pos)) {
-            System.out.printf("(%f, %f) within " + aabb + '\n', pos.x, pos.y);
+//            System.out.printf("(%f, %f) within " + aabb + '\n', pos.x, pos.y);
             return true;
         }
 
-        System.out.printf("(%f, %f) not within " + aabb + '\n', pos.x, pos.y);
+//        System.out.printf("(%f, %f) not within " + aabb + '\n', pos.x, pos.y);
         return false;
     }
 }

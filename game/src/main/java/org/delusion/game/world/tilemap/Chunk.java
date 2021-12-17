@@ -4,8 +4,10 @@ import org.delusion.engine.render.Renderer;
 import org.delusion.engine.render.texture.Tileset;
 import org.delusion.engine.sprite.Batch;
 import org.delusion.engine.utils.TriConsumer;
+import org.delusion.game.Main;
 import org.delusion.game.tiles.BackgroundTileType;
 import org.delusion.game.tiles.TileType;
+import org.delusion.game.world.World;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
@@ -22,8 +24,9 @@ public class Chunk {
     private boolean dirty = true;
     private Batch batch;
 
-    public Chunk(ChunkManager.ChunkPos position) {
+    public Chunk(ChunkManager.ChunkPos position, World world) {
         this.position = position;
+        compute((x,y) -> world.computeTile(x,y,position.x, position.y));
     }
 
     public void set(int x, int y, TileType t) {
@@ -65,6 +68,7 @@ public class Chunk {
     }
 
     public void save() {
+        Main.getCurrent().addToCleanupBatches(batch);
     }
 
     public void compute(BiFunction<Integer,Integer, TileType> computeF) {
@@ -80,12 +84,13 @@ public class Chunk {
         return position;
     }
 
-    public void draw(Renderer renderer, Tileset tileset) {
+    public void draw(Renderer renderer) {
         if (batch == null) {
             batch = new Batch(SIZE * SIZE);
-            System.out.println("Created batch for chunk");
+//            System.out.println("Created batch for chunk");
         }
         if (dirty) {
+            Tileset tileset = renderer.getPackedTextureManager().getTileset("tile");
             batch.begin();
             forEach((x,y,t) -> {
                 if (t != TileType.Air && t != null) {

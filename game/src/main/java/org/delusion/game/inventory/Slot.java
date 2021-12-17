@@ -1,5 +1,6 @@
 package org.delusion.game.inventory;
 
+import org.delusion.engine.render.Color;
 import org.delusion.engine.render.Renderer;
 import org.delusion.engine.render.shader.ShaderProgram;
 import org.delusion.engine.render.texture.Texture2D;
@@ -8,6 +9,7 @@ import org.delusion.engine.render.ui.Node;
 import org.delusion.engine.render.ui.Rect;
 import org.delusion.engine.render.PackedTextureManager;
 import org.delusion.engine.render.ui.TexturedRect;
+import org.delusion.game.Main;
 import org.delusion.game.utils.DirtyableVar;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -38,13 +40,14 @@ public class Slot extends TexturedRect {
     }
 
     public Slot(Vector2f pos, Vector2f size, ShaderProgram sh,  ShaderProgram textSh, PackedTextureManager packedTextureManager, Type type) {
-        super(pos, size, true, packedTextureManager.getTileset("slot").getTexture(), packedTextureManager.getTextureUVs("slot", type.name().toLowerCase()), sh);
+        super(pos, size, true, packedTextureManager.getTileset("slot").getTexture(), packedTextureManager.getTextureUVs("slot", type.name().toLowerCase()), new Color(1, 1, 1, 0.75f), sh);
         texman = packedTextureManager;
         this.type = DirtyableVar.create(type, t -> setUVs(texman.getTextureUVs("slot", t.name().toLowerCase())));
         origintype = type;
         contents = null;
         renderableStack = new Stack.Renderable(pos, new Vector2f(size).mul(0.75f), sh, textSh);
         add(renderableStack);
+        setTint(new Color(1.0f,1.0f,1.0f,0.7f));
     }
 
 
@@ -94,6 +97,11 @@ public class Slot extends TexturedRect {
             return out;
         }
 
+        if (getContents() == null) {
+            setContents(other);
+            return null;
+        }
+
         if (!getContents().getItem().equals(other.getItem()) || getContents().isEmpty()) { // Stack needs to be replaced
             Stack out = getContents();
             setContents(other);
@@ -113,10 +121,12 @@ public class Slot extends TexturedRect {
         int total = getContents().getCount() + other.getCount();
         if (total <= max) {
             contents.setCount(total);
+            renderableStack.update(contents);
             return null;
         }
 
         contents.setCount(max);
+        renderableStack.update(contents);
         int end = total - max;
         return i.makeStack(end);
     }
@@ -148,14 +158,13 @@ public class Slot extends TexturedRect {
     @Override
     public void onClick(Vector2f pos, int button, int mods) {
         super.onClick(pos, button, mods);
-        System.out.println("OnClick");
-//        if (getParent() instanceof Hotbar) {
-//            Hotbar h = (Hotbar) getParent();
-//            if (h.isModifiable()) {
-////                onClicked(h.getCursor().getStack());
-//            } else {
-//                h.setSelectedSlot(this);
-//            }
-//        }
+        if (getParent() instanceof Hotbar) {
+            Hotbar h = (Hotbar) getParent();
+            if (h.isModifiable()) {
+                Main.getCurrent().getPlayer().setCursor(onClicked(Main.getCurrent().getPlayer().getCursor()));
+            }
+        } else {
+            Main.getCurrent().getPlayer().setCursor(onClicked(Main.getCurrent().getPlayer().getCursor()));
+        }
     }
 }

@@ -32,10 +32,18 @@ public class World {
     public TileType computeTile(int x, int y, int xx, int yy) {
         int truex = x + xx * Chunk.SIZE;
         int truey = y + yy * Chunk.SIZE;
-        int h = 0;
-        if (Math.abs(truex) < 100 && truey >= 8 && truey <= 100) {
+        int h = (int)(Math.sin((double)truex / 25.0) * 10.0);
+        if (Math.abs(truex) < 100 && truey >= 14 && truey <= 100) {
             return TileType.Platform;
         }
+
+//        System.out.println(truex + " " + truey + " = " + (-2 * Math.abs(truex - 100) <= truey));
+
+        if (truex > truey && truex - 40 < truey) {
+            return TileType.Air;
+        }
+
+
         if (truey > h) {
             return TileType.Air;
         } else if (truey == h) {

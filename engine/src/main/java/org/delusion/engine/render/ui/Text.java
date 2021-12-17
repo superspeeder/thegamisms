@@ -81,6 +81,6 @@ public class Text extends Node implements Shape {
 
     @Override
     public void draw(RenderQueue rq, Batch batch) {
-        rq.queue(this);
+        if (isEnabled()) rq.queue(this);
     }
 }

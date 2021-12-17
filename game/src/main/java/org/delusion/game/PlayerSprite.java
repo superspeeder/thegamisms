@@ -3,10 +3,15 @@ package org.delusion.game;
 import org.delusion.engine.assets.AssetLibrary;
 import org.delusion.engine.math.AABB;
 import org.delusion.engine.math.Rect2i;
+import org.delusion.engine.render.shape.Shape;
 import org.delusion.engine.render.ui.Group;
 import org.delusion.engine.render.ui.Node;
+import org.delusion.engine.render.ui.TexturedRect;
 import org.delusion.engine.sprite.QuadSprite;
+import org.delusion.game.inventory.CursorSprite;
 import org.delusion.game.inventory.Hotbar;
+import org.delusion.game.inventory.InventoryView;
+import org.delusion.game.inventory.Stack;
 import org.delusion.game.tiles.SimpleProperty;
 import org.delusion.game.tiles.TileData;
 import org.delusion.game.utils.Direction;
@@ -36,6 +41,9 @@ public class PlayerSprite extends QuadSprite {
     private boolean crouching = false;
     private Set<TileData> tilesOnTopOf = new HashSet<>();
     private Group hud = new Group();
+    private InventoryView playerInv;
+    private Stack cursorStack = null;
+    private CursorSprite cursorSprite;
 
 
     public PlayerSprite(Vector2f position, World world) {
@@ -44,7 +52,11 @@ public class PlayerSprite extends QuadSprite {
         velocity = new Vector2f();
         acceleration = new Vector2f();
         hotbar = new Hotbar();
+        playerInv = new InventoryView(new Vector2f(-324, 128), new Vector2f(64, 64), 8, 5, 10);
+        playerInv.setEnabled(false);
+        cursorSprite = new CursorSprite();
         hud.add(hotbar);
+        hud.add(playerInv);
     }
 
     public void onKeyPress(Key key) {
@@ -88,6 +100,7 @@ public class PlayerSprite extends QuadSprite {
     }
 
     private static final Vector2f cscale = new Vector2f(Chunk.PIXELS_PER_TILE);
+
     private void moveX(float delta) {
         velocity.x = Utils.clamp(velocity.x + acceleration.x * delta + world.getGravity().x * delta, -MAX_VEL_X, MAX_VEL_X);
         move(velocity.x * delta * MOVE_MOD, 0);
@@ -110,6 +123,7 @@ public class PlayerSprite extends QuadSprite {
         if (velocity.x > 0) {
             // Moving right
 
+
             for (TileData td : collisionTiles) {
                 if (getBoundingBox().overlaps(new AABB(new Vector2f(td.pos), cscale)) && td.ty.solidInDirection(Direction.Right)) {
                     position.x = td.pos.x - scale.x;
@@ -127,6 +141,7 @@ public class PlayerSprite extends QuadSprite {
             }
         }
     }
+
 
     public AABB getBoundingBox() {
         return new AABB(position, scale);
@@ -176,7 +191,7 @@ public class PlayerSprite extends QuadSprite {
                     if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && crouching) {
                         continue;
                     }
-                    else if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && position.y + 4 < td.pos.y + Chunk.PIXELS_PER_TILE) {
+                    else if (td.ty.hasSimpleProperty(SimpleProperty.Platform) && position.y + 5 < td.pos.y + Chunk.PIXELS_PER_TILE) {
                         continue;
                     }
                     position.y = td.pos.y + Chunk.PIXELS_PER_TILE;
@@ -193,5 +208,28 @@ public class PlayerSprite extends QuadSprite {
 
     public Hotbar getHotbar() {
         return hotbar;
+    }
+
+    public void toggleInv() {
+        playerInv.setEnabled(!playerInv.isEnabled());
+//        Main.getCurrent().redrawOverlay();
+    }
+
+    public Stack getCursor() {
+        return cursorStack;
+    }
+
+    public void setCursor(Stack news) {
+        cursorStack = news;
+        cursorSprite.update(cursorStack);
+        System.out.println("Cursor: " + cursorStack);
+    }
+
+    public boolean isInventoryOpen() {
+        return playerInv.isEnabled();
+    }
+
+    public CursorSprite getCursorSprite() {
+        return cursorSprite;
     }
 }

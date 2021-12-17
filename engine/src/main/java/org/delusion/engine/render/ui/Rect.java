@@ -66,6 +66,6 @@ public abstract class Rect extends Group implements Shape {
 
     @Override
     public boolean pointWithin(Vector2f pos) {
-        return Utils.rectContains(this.pos, size, pos);
+        return super.pointWithin(pos) && Utils.rectContains(this.pos, size, pos);
     }
 }

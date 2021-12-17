@@ -10,6 +10,12 @@ public class Item {
     private int maxStackSize;
     private String name;
     private Texture2D tex;
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
     private Vector4f uvs;
 
     public Item(String name, int maxStackSize, Texture2D tex, Vector4f uvs) {

@@ -33,7 +33,8 @@ public class ShaderProgram {
         System.out.println("Active Uniforms: ");
         for (int i = 0 ; i < uc ; i++) {
             System.out.println(i + ": " + glGetActiveUniformName(handle, i));
-            uniformLocations.put(glGetActiveUniformName(handle, i), i);
+            String n = glGetActiveUniformName(handle, i);
+            uniformLocations.put(n, glGetUniformLocation(handle, n));
         }
 
 
@@ -127,5 +128,9 @@ public class ShaderProgram {
     public void uniform4f(String name, Vector4f vec) {
         if (vec != null)
             uniform4f(name, vec.x, vec.y, vec.z, vec.w);
+    }
+
+    public boolean hasUniform(String name) {
+        return uniformLocations.containsKey(name);
     }
 }

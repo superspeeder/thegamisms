@@ -1,6 +1,7 @@
 package org.delusion.engine.render.texture;
 
 
+import org.delusion.engine.render.framebuffer.IFramebufferAttachable;
 import org.delusion.engine.utils.Utils;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -16,7 +17,7 @@ import java.util.Objects;
 import static org.lwjgl.opengl.GL46.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-public class Texture2D {
+public class Texture2D implements IFramebufferAttachable {
     private int handle;
     private int width;
     private int height;
@@ -64,7 +65,6 @@ public class Texture2D {
         ByteBuffer data = STBImage.stbi_load_from_memory(Objects.requireNonNull(Utils.loadByteBufferResource(path), "Texture '" + path + "' is not valid. (no data exists in file)"), ibs[0], ibs[1], ibs[2], 4);
 
         if (data == null) {
-            System.err.println("Fuck!");
             throw new IOException("Failed to load texture '" + path + "'");
         }
 
@@ -107,6 +107,11 @@ public class Texture2D {
 
     public int getHeight() {
         return height;
+    }
+
+    @Override
+    public int getFormat() {
+        return format;
     }
 
     public Vector4f pixelToUVs(float u1, float v1, float u2, float v2) {

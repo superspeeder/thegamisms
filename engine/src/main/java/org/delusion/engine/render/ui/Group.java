@@ -21,6 +21,7 @@ public class Group extends Node {
 
     @Override
     public void draw(RenderQueue rq, Batch batch) {
+        if (!isEnabled()) return;
         children.forEach(c -> {
             c.draw(rq, batch);
         });
